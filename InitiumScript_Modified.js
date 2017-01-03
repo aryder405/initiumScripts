@@ -1,4 +1,4 @@
-// ==UserScript==
+﻿// ==UserScript==
 // @name         InitiumPro
 // @namespace    https://github.com/hey-nails/InitiumPro
 // @version      0.5
@@ -25,7 +25,7 @@ var           AUTO_FLEE = 0;    //percent of health to flee automatically. 0 tur
 var         STOP_ATTACK = 75;
 var AUTO_CONFIRM_POPUPS = true; //confirms popups like camp name so you can keep your fingers to the metal!
 var        HIDE_VERSION = true; //this will hide pro icon with the version number (you jerk)
-var 		      PESTS = ["Troll", "Orc Footman"];
+var 		      PESTS = ["Troll", "Orc Footman", "Shell Troll"];
 /***************************/
 
 var $=window.jQuery,loc={},player={};
