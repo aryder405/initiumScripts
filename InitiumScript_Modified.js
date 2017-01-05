@@ -25,7 +25,8 @@ var           AUTO_FLEE = 0;    //percent of health to flee automatically. 0 tur
 var         STOP_ATTACK = 75;
 var AUTO_CONFIRM_POPUPS = true; //confirms popups like camp name so you can keep your fingers to the metal!
 var        HIDE_VERSION = true; //this will hide pro icon with the version number (you jerk)
-var 		      PESTS = ["Troll", "Orc Footman", "Shell Troll", "Wild Dog"];
+var 		      PESTS = ["Troll", "Orc Footman", "Shell Troll", "Bear", "Wild Dog", "Gnoll Scout", "Trifelinikis", "Rattlesnake"];
+var    PRIORITY_TARGETS = ["Skeletal Scout", "Hobgoblin Hunter", "Hobgoblin Berserker"];
 /***************************/
 
 var $=window.jQuery,loc={},player={};
@@ -52,8 +53,7 @@ var krill=getThisPartyStarted();
 
 //EXTRA HOTKEYS: C for create campsite, H for show hidden paths
 document.addEventListener('keydown', function(e) {
-	
-    if(e.target.nodeName!='INPUT') {
+    if(e.target.nodeName!='INPUT' || e.srcElement.nodeName != 'INPUT') {
         if(e.keyCode===67)  
         { window.createCampsite(); }
         if(e.keyCode===72) 
@@ -146,13 +146,22 @@ function loadLocalMerchantDetails() {
 function keepPunching() {
     //for a more CircleMUD feel
     if(AUTO_SWING) {
-        if( loc.type==="in combat!" && PESTS.indexOf(loc.target) != -1 ){
+        if( loc.type==="in combat!" && PESTS.indexOf(loc.target) > -1 ){
 			combatMessage("Pest Protection: " + loc.target + " - AUTO-FLEE");
             window.combatEscape();
         }
         if( (loc.type==="in a fight!" || loc.type==="in combat!"  )&& window.urlParams.type==="attack" && player.health>STOP_ATTACK) {
-            if(window.urlParams.hand==="RightHand")  window.combatAttackWithRightHand();  else  window.combatAttackWithLeftHand();
+            if(window.urlParams.hand==="RightHand")  
+                window.combatAttackWithRightHand();  
+            else  
+                window.combatAttackWithLeftHand();
             combatMessage("Attacking with "+window.urlParams.hand,"AUTO-SWING");
+            return;
+        }
+        if( (loc.type==="in a fight!" || loc.type==="in combat!"  ) && PRIORITY_TARGETS.indexOf(loc.target) > -1 ){
+            window.combatAttackWithLeftHand();
+            combatMessage("PRIORITY TARGET: " + loc.target);
+            return;
         }
     }
     if(AUTO_FLEE>0) {
