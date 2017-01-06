@@ -25,9 +25,10 @@ var           AUTO_FLEE = 0;    //percent of health to flee automatically. 0 tur
 var         STOP_ATTACK = 75;
 var AUTO_CONFIRM_POPUPS = true; //confirms popups like camp name so you can keep your fingers to the metal!
 var        HIDE_VERSION = true; //this will hide pro icon with the version number (you jerk)
-var 		      PESTS = ["Troll", "Orc Footman", "Shell Troll", "Bear", "Wild Dog", "Gnoll Scout", "Trifelinikis", "Rattlesnake"];
+var 		      PESTS = ["Troll", "Orc Footman", "Shell Troll", "Bear", "Wild Dog", "Gnoll Scout", "Trifelinikis", "Rattlesnake", "Hobgoblin Soldier"];
 var    PRIORITY_TARGETS = ["Skeletal Scout", "Hobgoblin Hunter", "Hobgoblin Berserker"];
-var        IGNORE_ITEMS = [""]
+var      PRIORITY_ITEMS = ["Arena Ticket", "Sapphire", "Ruby", "Spiked Collar", "Diamond", "Emerald"]
+var        IGNORE_ITEMS = ["Hardened Leather Gloves"]
 /***************************/
 
 var $=window.jQuery,loc={},player={};
@@ -250,7 +251,7 @@ function getRareLoot() {
         if( loc.isCombatLocation ) {
             $(".main-item-container").find("a[rel^=viewitem]").each( function(index){
                 lootItem = {
-					itemAnchor : $(this),
+					itemAnchor : $(this).closest(".main-item-container").find("a[onclick*=collectItem]").eq(0),
                     itemID : $(this).attr("rel").split('=')[1],
                     itemName : $(this).find(".main-item-name").text(),
                     itemRarity : $(this).hasClass("item-rare") ? "rare" : $(this).hasClass("item-unique") ? "unique" : $(this).hasClass("item-epic") ? "epic" : "common",
@@ -258,9 +259,10 @@ function getRareLoot() {
                 availableItems.push( lootItem );
             });
         //console.log(availableItems);
-            var pickupUrl = "ServletCharacterControl?type=collectItem&itemId=";			
+            var pickupUrl = "ServletCharacterControl?type=collectItem&itemId=";
+            var lootArr = ["rare", "unique", "epic"];
 			availableItems.forEach( function(item){
-				if(item.itemRarity == "rare" || item.itemRarity == "unique" || item.itemRarity == "epic" ){
+				if( (lootArr.indexOf(item.itemRarity) > 0 && (IGNORE_ITEMS.indexOf(item.itemName) == -1)) || PRIORITY_ITEMS.indexOf(item.itemName) > 0 ){
                     var url = pickupUrl + item.itemID +"&ajax=true&v="+window.verifyCode;					
                      $.ajaxQueue({url: url, foundItem:item }).done(function(data) {						 
                          console.info("Picked Up LOOT: " + item.itemName);
