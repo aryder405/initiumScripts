@@ -20,7 +20,7 @@
 var           AUTO_GOLD = true;  //auto get gold after battles and when entering a room
 var           AUTO_REST = true;  //auto rest if injured and in restable area
 var          AUTO_SWING = true; //repeats attack after your initial attack
-var   AUTO_LEAVE_FORGET = false; //automatically clicks 'Leave and Forget' after a battle
+var   AUTO_LEAVE_FORGET = true; //automatically clicks 'Leave and Forget' after a battle
 var           AUTO_FLEE = 0;    //percent of health to flee automatically. 0 turns it off
 var         STOP_ATTACK = 75;
 var AUTO_CONFIRM_POPUPS = true; //confirms popups like camp name so you can keep your fingers to the metal!
@@ -176,12 +176,12 @@ function keepPunching() {
     if(AUTO_LEAVE_FORGET && loc.type==="combat site") {
         if(AUTO_GOLD) {
             setTimeout(function() {
-                if(window.gotGold===true) {
+                if(window.gotGold===true && window.allItemsLooted === true) {
                     $('a[onclick^="leaveAndForgetCombatSite"]').click();
                 } else {
                     location.reload();//we didn't get gold, reload and try again.
                 }
-            }, 7000); //reload aftera wait to make sure we got gold
+            }, 3000); //reload aftera wait to make sure we got gold
         } else {
             $('a[onclick^="leaveAndForgetCombatSite"]').click();
         }
@@ -245,6 +245,9 @@ function getRareLoot() {
     var localCharsURL="/locationcharacterlist.jsp";
     var lootItem = {};
     var availableItems = [];
+	var lootTheseItems = [];
+
+    
     $.ajaxQueue({
         url: localCharsURL,
     }).done(function(data) {
@@ -258,21 +261,32 @@ function getRareLoot() {
                 };
                 availableItems.push( lootItem );
             });
-        //console.log(availableItems);
+            //console.log(availableItems);
             var pickupUrl = "ServletCharacterControl?type=collectItem&itemId=";
             var lootArr = ["rare", "unique", "epic"];
-			availableItems.forEach( function(item){
-				if( (lootArr.indexOf(item.itemRarity) > 0 && (IGNORE_ITEMS.indexOf(item.itemName) == -1)) || PRIORITY_ITEMS.indexOf(item.itemName) > 0 ){
-                    var url = pickupUrl + item.itemID +"&ajax=true&v="+window.verifyCode;					
+            
+			//figure out which items we want to loot, add them to the loot list
+			availableItems.forEach( function(item){ 
+				if( (lootArr.indexOf(item.itemRarity) > 0 && (IGNORE_ITEMS.indexOf(item.itemName) == -1)) 
+					|| PRIORITY_ITEMS.indexOf(item.itemName) > 0 )
+					{ 						
+						lootTheseItems.push(item);
+					}})
+            window.lootCount = lootTheseItems.length;
+			//loot the items in the loot list
+			lootTheseItems.forEach( function(item){
+				var url = pickupUrl + item.itemID +"&ajax=true&v="+window.verifyCode;					
                      $.ajaxQueue({url: url, foundItem:item }).done(function(data) {						 
                          console.info("Picked Up LOOT: " + item.itemName);
                          item.itemAnchor.text("LOOTED!").css({"color":"yellow"});
-                         //window.gotGold=true;
-						});
-                }}
-            )		
-       
+                         window.itemsLooted++;
+						});				
+			})
+          if(window.lootCount === window.itemsLooted){
+			window.allItemsLooted = true;
+		   }
         }
+		
     });
 }
 
@@ -477,6 +491,9 @@ function getThisPartyStarted() {
     window.FLAG_LOADSHOPS=false;
     window.FLAG_LOADSHOPITEMS=false;
     window.gotGold=false;
+	window.allItemsLooted = false;
+    window.lootCount = 0;
+	window.itemsLooted = 0;
     window.localItems={};
     window.urlParams=getUrlParams();
     //init stuff
