@@ -27,6 +27,7 @@ var AUTO_CONFIRM_POPUPS = true; //confirms popups like camp name so you can keep
 var        HIDE_VERSION = true; //this will hide pro icon with the version number (you jerk)
 var 		      PESTS = ["Troll", "Orc Footman", "Shell Troll", "Bear", "Wild Dog", "Gnoll Scout", "Trifelinikis", "Rattlesnake"];
 var    PRIORITY_TARGETS = ["Skeletal Scout", "Hobgoblin Hunter", "Hobgoblin Berserker"];
+var        IGNORE_ITEMS = [""]
 /***************************/
 
 var $=window.jQuery,loc={},player={};
@@ -249,6 +250,7 @@ function getRareLoot() {
         if( loc.isCombatLocation ) {
             $(".main-item-container").find("a[rel^=viewitem]").each( function(index){
                 lootItem = {
+					itemAnchor : $(this),
                     itemID : $(this).attr("rel").split('=')[1],
                     itemName : $(this).find(".main-item-name").text(),
                     itemRarity : $(this).hasClass("item-rare") ? "rare" : $(this).hasClass("item-unique") ? "unique" : $(this).hasClass("item-epic") ? "epic" : "common",
@@ -256,42 +258,18 @@ function getRareLoot() {
                 availableItems.push( lootItem );
             });
         //console.log(availableItems);
-            var pickupUrl = "ServletCharacterControl?type=collectItem&itemId=";
+            var pickupUrl = "ServletCharacterControl?type=collectItem&itemId=";			
 			availableItems.forEach( function(item){
 				if(item.itemRarity == "rare" || item.itemRarity == "unique" || item.itemRarity == "epic" ){
-                    var url = pickupUrl + item.itemID +"&ajax=true&v="+window.verifyCode;
-					//console.log("Picking up:  " + pickupUrl + item.itemID);
-                     $.ajaxQueue({url: url, foundItem:item }).done(function(data) {
+                    var url = pickupUrl + item.itemID +"&ajax=true&v="+window.verifyCode;					
+                     $.ajaxQueue({url: url, foundItem:item }).done(function(data) {						 
                          console.info("Picked Up LOOT: " + item.itemName);
-                         showMessage("Picked Up LOOT: " + item.itemName);
+                         item.itemAnchor.text("LOOTED!").css({"color":"yellow"});
                          //window.gotGold=true;
-            });
+						});
                 }}
-            )
-			
-        /*
-        var goldLinks = $(data).find("[onclick*='Doge']:not(:contains(' 0 gold'))");
-        var dogeCollected=0,confirmedDoge=0,foundDoge;
-        var battleGoldLink=$(".main-item-container").find('a[onclick*="collectDogecoin"]');
-        if(goldLinks.length===0)return showMessage("No gold laying around.","gray");
-        showMessage("<img src='"+window.IMG_GOLDCOIN+"' class='coin-tiny'>&nbsp;<span id='picking-gold-status'>Found gold! Picking it up.</span>","yellow");
-        goldLinks.each(function(index) {
-            var getGoldURL=$(this).attr("onclick").split('"')[1]+"&ajax=true&v="+window.verifyCode;
-            var foundDoge=parseInt($(this).text().split(" ")[1]);
-            dogeCollected+=foundDoge;
-            $.ajaxQueue({url: getGoldURL,doge:this,foundDoge:foundDoge}).done(function(data) {
-                confirmedDoge+=parseInt($(this.doge).text().split(" ")[1]);
-                $(this.doge).html("Collected "+ foundDoge+" gold!");
-                $(battleGoldLink).text("Collected "+ foundDoge+" gold!").css({"color":"yellow"});
-                $("#picking-gold-status").text((confirmedDoge!==dogeCollected)?"Picking up "+confirmedDoge+" of "+dogeCollected+" gold found!":"Picked up "+dogeCollected+" gold!");
-                console.info("Confirmed "+confirmedDoge+" of "+dogeCollected+" doge!");
-                window.gotGold=true;
-            });
-        });
-        //inform the user of our sweet gains!
-        $("#mainGoldIndicator").text(Number(player.gold+dogeCollected).toLocaleString('en'));
-        pulse("#mainGoldIndicator","yellow");
-        */
+            )		
+       
         }
     });
 }
