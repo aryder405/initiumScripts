@@ -27,8 +27,8 @@ var AUTO_CONFIRM_POPUPS = true; //confirms popups like camp name so you can keep
 var        HIDE_VERSION = true; //this will hide pro icon with the version number (you jerk)
 var 		      PESTS = ["Troll", "Orc Footman", "Shell Troll", "Bear", "Wild Dog", "Gnoll Scout", "Trifelinikis", "Rattlesnake", "Hobgoblin Soldier"];
 var    PRIORITY_TARGETS = ["Skeletal Scout", "Hobgoblin Hunter", "Hobgoblin Berserker"];
-var      PRIORITY_ITEMS = ["Arena Ticket", "Sapphire", "Ruby", "Spiked Collar", "Diamond", "Emerald"]
-var        IGNORE_ITEMS = ["Hardened Leather Gloves"]
+var      PRIORITY_ITEMS = ["Arena Ticket", "Sapphire", "Ruby", "Spiked Collar", "Diamond", "Emerald"];
+var        IGNORE_ITEMS = ["Hardened Leather Gloves"];
 /***************************/
 
 var $=window.jQuery,loc={},player={};
@@ -280,11 +280,12 @@ function getRareLoot() {
                          console.info("Picked Up LOOT: " + item.itemName);
                          item.itemAnchor.text("LOOTED!").css({"color":"yellow"});
                          window.itemsLooted++;
+                         if(window.lootCount === window.itemsLooted){
+                            window.allItemsLooted = true;
+                           }
 						});				
 			})
-          if(window.lootCount === window.itemsLooted){
-			window.allItemsLooted = true;
-		   }
+          
         }
 		
     });
