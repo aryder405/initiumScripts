@@ -239,6 +239,64 @@ function getLocalGold() {
     });
 }
 
+function getRareLoot() {
+    var localCharsURL="/locationcharacterlist.jsp";
+    var lootItem = {};
+    var availableItems = [];
+    $.ajaxQueue({
+        url: localCharsURL,
+    }).done(function(data) {
+        if( loc.isCombatLocation ) {
+            $(".main-item-container").find("a[rel^=viewitem]").each( function(index){
+                lootItem = {
+                    itemID : $(this).attr("rel").split('=')[1],
+                    itemName : $(this).find(".main-item-name").text(),
+                    itemRarity : $(this).hasClass("item-rare") ? "rare" : $(this).hasClass("item-unique") ? "unique" : $(this).hasClass("item-epic") ? "epic" : "common",
+                };
+                availableItems.push( lootItem );
+            });
+        //console.log(availableItems);
+            var pickupUrl = "ServletCharacterControl?type=collectItem&itemId=";
+			availableItems.forEach( function(item){
+				if(item.itemRarity == "rare" || item.itemRarity == "unique" || item.itemRarity == "epic" ){
+                    var url = pickupUrl + item.itemID +"&ajax=true&v="+window.verifyCode;
+					//console.log("Picking up:  " + pickupUrl + item.itemID);
+                     $.ajaxQueue({url: url, foundItem:item }).done(function(data) {
+                         console.info("Picked Up LOOT: " + item.itemName);
+                         showMessage("Picked Up LOOT: " + item.itemName);
+                         //window.gotGold=true;
+            });
+                }}
+            )
+			
+        /*
+        var goldLinks = $(data).find("[onclick*='Doge']:not(:contains(' 0 gold'))");
+        var dogeCollected=0,confirmedDoge=0,foundDoge;
+        var battleGoldLink=$(".main-item-container").find('a[onclick*="collectDogecoin"]');
+        if(goldLinks.length===0)return showMessage("No gold laying around.","gray");
+        showMessage("<img src='"+window.IMG_GOLDCOIN+"' class='coin-tiny'>&nbsp;<span id='picking-gold-status'>Found gold! Picking it up.</span>","yellow");
+        goldLinks.each(function(index) {
+            var getGoldURL=$(this).attr("onclick").split('"')[1]+"&ajax=true&v="+window.verifyCode;
+            var foundDoge=parseInt($(this).text().split(" ")[1]);
+            dogeCollected+=foundDoge;
+            $.ajaxQueue({url: getGoldURL,doge:this,foundDoge:foundDoge}).done(function(data) {
+                confirmedDoge+=parseInt($(this.doge).text().split(" ")[1]);
+                $(this.doge).html("Collected "+ foundDoge+" gold!");
+                $(battleGoldLink).text("Collected "+ foundDoge+" gold!").css({"color":"yellow"});
+                $("#picking-gold-status").text((confirmedDoge!==dogeCollected)?"Picking up "+confirmedDoge+" of "+dogeCollected+" gold found!":"Picked up "+dogeCollected+" gold!");
+                console.info("Confirmed "+confirmedDoge+" of "+dogeCollected+" doge!");
+                window.gotGold=true;
+            });
+        });
+        //inform the user of our sweet gains!
+        $("#mainGoldIndicator").text(Number(player.gold+dogeCollected).toLocaleString('en'));
+        pulse("#mainGoldIndicator","yellow");
+        */
+        }
+    });
+}
+
+
 function getLocalStuff() {
     var localItemsList,localItemsURL="/ajax_moveitems.jsp?preset=location";
     if($("#local-item-summary-container").length===0) $("#buttonbar-main").first().append("<div id='local-item-summary-container'><div id='local-item-summary-container'><h4 style='margin-top:20px;'>Items in area:&nbsp;<div id='reload-local-items-container'><a id='reload-inline-items'><img src='javascript/images/wait.gif'></a></div></h4><div class='blue-box-full-top'></div><div id='local-item-summary' class='div-table'><div><br/><br/><center><img src='javascript/images/wait.gif'></center><br/><br/></div></div><div class='blue-box-full-bottom'></div></div></div>"); //add summary box if not exists
@@ -399,7 +457,10 @@ function getLocation() {
     else { loc.type=(window.biome)?window.biome.toLowerCase():"in a fight!"; } //if all else fails, i guess we're outside
     loc.campable=($("a[onclick^=createCampsite]").length>0)?true:false;
     loc.rest=($("a[onclick^=doRest]").length>0)?true:false;
-    loc.target = $("#inBannerCombatantWidget > a") != null ? $("#inBannerCombatantWidget").find("a").first().text() : null;	
+    loc.target = $("#inBannerCombatantWidget > a") != null ? $("#inBannerCombatantWidget").find("a").first().text() : null;
+	var locText = $('#locationDescription').text();
+	loc.isCombatLocation = locText.indexOf("This is the location where a battle took place, but the battle is over now.") > 0;   
+    	
     return loc;
 }
 
@@ -446,7 +507,7 @@ function getThisPartyStarted() {
     //mutation observer watches the dom
     MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
     //setting up observers
-    observe(["#instanceRespawnWarning",".popup_confirm_yes","#popups","#page-popup-root"],{childList:true,characterData:true,attributes:true,subtree:true});
+    observe(["#instanceRespawnWarning",".popup_confirm_yes", ".popup_message_okay","#popups","#page-popup-root"],{childList:true,characterData:true,attributes:true,subtree:true});
     //finish up when page ready
     $(document).ready(function () {
         player=getPlayerStats();
@@ -454,8 +515,16 @@ function getThisPartyStarted() {
         updateLayouts();
         putHotkeysOnMap();
         keepPunching();
+        autoConfirmPopups();
+        getRareLoot();
     });
     return true;
+}
+
+function autoConfirmPopups(){
+    if(AUTO_CONFIRM_POPUPS){
+                $('#popups').find(".popup_confirm_yes, .popup_message_okay").click();//auto-click confirm yes button
+            } 
 }
 
 //do stuff when dom changes!
@@ -464,7 +533,9 @@ function mutationHandler (mutationRecords) {
         if (typeof mutation.removedNodes == "object") {
             var removed = $(mutation.removedNodes);
             var added = $(mutation.addedNodes);
-            if(AUTO_CONFIRM_POPUPS) $(added).find(".popup_confirm_yes").click();//auto-click confirm yes button
+            if(AUTO_CONFIRM_POPUPS){
+                $(added).find(".popup_confirm_yes, .popup_message_okay").click();//auto-click confirm yes button
+            } 
             //instance countdown
             var countDown=removed.text().split("arrive")[1];
             if(countDown) {
@@ -497,8 +568,7 @@ function updateLayouts() {
     if(loc.type)$(".header-location").append("<span style='margin-left:12px;color:red;'>("+loc.type+")</span>");
     //show 'em that pro is active!
     if(!HIDE_VERSION)$(".header").append("<div id='initium-pro-version'><a href='https://github.com/hey-nails/InitiumPro' target='_blank'><img src='"+window.IMG_PRO+"'><span>v "+GM_info.script.version+"</span></a></div>");
-    //the candle
-    $(".header").append("<div id='light'><a onclick='$(\".banner-shadowbox\").toggleClass(\"torched\");'><img src='"+window.IMG_CANDLE+"'></a></div>");
+    
 }
 function updateCSS() {
     $("head").append("<style>"+
@@ -566,7 +636,6 @@ function updateCSS() {
     window.IMG_STAT_SHIELD="data:image/gif;base64,R0lGODlhEAAQAKIEAJmZmf+NAP+fAP+PAP///wAAAAAAAAAAACH5BAEAAAQALAAAAAAQABAAAANDSLrQsNA5MWRTQOgdwtgPkW3aYJpBOJLnqZJlm2Iw1VY0fAuv3vKYVQx1yW1OnlCQNUgql6VOESIaOamRTOWJrU4XCQA7";
     window.IMG_STAT_POTION="data:image/gif;base64,R0lGODlhEAAQAKIFALvEyAOW3Sq49imd1GN6hf///wAAAAAAACH5BAEAAAUALAAAAAAQABAAAAM6WKpATmDJ1V6csrqL2YOdIgwkGQwdKaxB22LDyroBLAt0PcVybve038wlxAV3Nx8SSFwOX7vSQFlIAAA7";
     window.IMG_ARROW="data:image/gif;base64,R0lGODlhFAASAIABAPv+/v///yH5BAEAAAEALAAAAAAUABIAAAInjH+ggO2x1JtRTlfZbXnz6iEdlJXmiaYlqYLh6MGbfNGU+0ZhsjwFADs=";
-    window.IMG_CANDLE="data:image/gif;base64,R0lGODlhHgA8AKIHAEEyMdmgZu7Fl99xJopvMP///6wyMv///yH5BAEAAAcALAAAAAAeADwAAAP/eLq8Zi3KqR69OOvNu3cfBoXSM5KNiUbq6gzD6RqwvNK1HRqCEOsfns8y6/1cCtgAuVAyGYBVbxoI4EjTXhUAw/oGhV6h6uwYwWJy91MdBwQFdyBUFdTjePr7ji/o7W9xU398g2x7gWE9hImGHnWFi4eAcIoCjFmSj4iZlx9Ub5mYdZodkJylHKeUqRugrJ4er6SxZlqotRyzobmumachncCfv4jBxYB/oFVzk8tVyresm6HMzK0Y14DW2A1kCtrW1hnfB+Hi0BEE6wQAdettcehkW+wK7OtcA+1TAP7t+gDgI7BgIAEYAqe0W6jPYIR/+Pzp2zfQHwaJGDNm1KCxCCPGDh4lUkgAADs=";
     window.IMG_BOXBUTTON="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAAB1CAYAAACGYelhAAAB20lEQVR4nO3UsW3CUBRG4Vu4dIUsKGKLBZAyQArGyAreALmlZgFKqtRMQJFBUqTIGE6RiALsSOg5MuacX/pKF0/3yBHOOeecc879sUVEnDQJzz03TNoyIlpNwrrnhkkzgOkwADgDgEsOYBE/Bz/LsuylKIpW92U+n1/J8/z18n4R8XRLAKfLqoqiaA+Hg+7M8Xi8slqtuv4KHwbwgAwAzgDgDABu9AC2261GtNlsrlRVZQAUBgBnAHAGAGcAcAYAZwBwBgBnAHAGAGcAcAYAZwBwBgBnAHAGAGcAcAYAZwBwBgBnAHAGAGcAcAYAZwBwBgBnAHAGAGcAcAYAZwBwBgBnAHAGAGcAcAYAZwBwBgBnAHAGAGcAcAYAZwBwBgBnAHAGAGcAcAYAZwBwBgBnAHAGAGcAcAYAZwBwBgBnAHAGAGcAcAYAZwBwBgBnAHAGAGcAcAYAZwBwBgBnAHAGAGcAcAYAZwBwBgBnAHAGAGcAcAYAZwBwBgBnAHAGAGcAcAYAN3oA+/0+SdM0SjB6AKm6HqA0BgBnAHAGADdEAG+/H5zNZrPP3W7XDq2uaw2sLMuvy/tFxPstAXRt2VGV7tO654ZJM4DpMAA4A4AzALh/CcA555xzzj3IvgGv+knN2J8eTwAAAABJRU5ErkJggg==";
 }
 String.prototype.decode=function() { return decodeURIComponent(this).replace("%27","'"); };
