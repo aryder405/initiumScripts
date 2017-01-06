@@ -181,7 +181,7 @@ function keepPunching() {
                 } else {
                     location.reload();//we didn't get gold, reload and try again.
                 }
-            }, 3000); //reload aftera wait to make sure we got gold
+            }, 7000); //reload aftera wait to make sure we got gold
         } else {
             $('a[onclick^="leaveAndForgetCombatSite"]').click();
         }
@@ -285,7 +285,9 @@ function getRareLoot() {
                            }
 						});				
 			})
-          
+          if(window.lootCount === window.itemsLooted){
+                            window.allItemsLooted = true;
+                           }
         }
 		
     });
