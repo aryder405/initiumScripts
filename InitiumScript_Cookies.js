@@ -5,6 +5,8 @@
 // @updateURL    https://github.com/aryder405/initiumScripts/blob/master/InitiumScript_Modified.js
 // @downloadURL  https://github.com/aryder405/initiumScripts/blob/master/InitiumScript_Modified.js
 // @supportURL   https://github.com/aryder405/initiumScripts/blob/master/InitiumScript_Modified.js
+// @require      https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js
+// @require      https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js
 // @match        https://www.playinitium.com/*
 // @match        http://www.playinitium.com/*
 // @grant        none
@@ -15,6 +17,7 @@
 
 'use strict';
 
+var loc={},player={};
 /*** INITIUM PRO OPTIONS ***/
 
 var           AUTO_GOLD = true;  //auto get gold after battles and when entering a room
@@ -29,10 +32,22 @@ var 		      PESTS = ["Troll", "Orc Footman", "Shell Troll", "Bear", "Wild Dog", 
 var    PRIORITY_TARGETS = ["Skeletal Scout", "Hobgoblin Hunter", "Hobgoblin Berserker"];
 var      PRIORITY_ITEMS = ["Arena Ticket", "Sapphire", "Ruby", "Spiked Collar", "Diamond", "Emerald", "Orc Shaman Staff"];
 var        IGNORE_ITEMS = ["Hardened Leather Gloves"];
-var        AUTO_EXPLORE = true;
+var        AUTO_EXPLORE = $.cookie("autoExplore") || $.cookie("autoExplore", false);
 /***************************/
 
-var $=window.jQuery,loc={},player={};
+
+
+var autoExploreButton =
+    $('<button/>', {
+        text: "Auto Explore",
+        id: 'AutoExploreButton',
+        style: "color:" + (AUTO_EXPLORE ? "green" : "red"),
+        click: function () { $.cookie("autoExplore", !AUTO_EXPLORE); }
+    });
+
+function AddButtonsToPage(){
+      $(".header").append(autoExploreButton);
+}
 
 //ajax queue
 (function($) {
@@ -153,12 +168,12 @@ function autoExplore(){
             if( loc.campable ){
                 setTimeout(function(){
                     window.createCampsite();
-                }, 2000);
+                }, 5000);
             }
             else{
                 setTimeout(function(){
                     window.doExplore(true);
-                }, 2000);
+                }, 5000);
             }
         }else{
             setTimeout(function(){ location.reload(); }, 60000);
@@ -166,8 +181,8 @@ function autoExplore(){
 	}
     if( AUTO_EXPLORE && player.health > STOP_ATTACK && loc.type === "camp" && loc.enemiesNearby ){
          setTimeout(function(){
-                    window.defend();
-                }, 2000);
+                    window.campsiteDefend();
+                }, 5000);
     }
 }
 
@@ -487,8 +502,17 @@ function getLocation() {
     loc.target = $("#inBannerCombatantWidget > a") !== null ? $("#inBannerCombatantWidget").find("a").first().text() : null;
 	var locText = $('#locationDescription').text();
 	loc.isCombatLocation = locText.indexOf("This is the location where a battle took place, but the battle is over now.") > 0;
-    var enemyText = $(".main-description:contains('The monster activity in this area seems')").text();
-    loc.enemiesNearby = enemyText.indexOf("none") < 0;
+
+    if(loc.type=="camp"){
+        var campIntegrity = $("p:contains('Camp integrity:') > span").text();
+        if( campIntegrity !== ("100.00%")){
+           loc.enemiesNearby = true;
+        }
+    }else{
+        var enemyText = $(".main-description:contains('The monster activity in this area seems')").text();
+        loc.enemiesNearby = enemyText.indexOf("none") < 0;
+    }
+    
     return loc;
 }
 
@@ -531,6 +555,7 @@ function getThisPartyStarted() {
     window.localItems={};
     window.urlParams=getUrlParams();
     //init stuff
+    AddButtonsToPage();
     updateCSS();
     statDisplay();
     getLocalGold();
