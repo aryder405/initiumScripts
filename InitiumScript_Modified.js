@@ -26,9 +26,9 @@ var         STOP_ATTACK = 75;
 var AUTO_CONFIRM_POPUPS = true; //confirms popups like camp name so you can keep your fingers to the metal!
 var        HIDE_VERSION = true; //this will hide pro icon with the version number (you jerk)
 var 		      PESTS = ["Troll", "Orc Footman", "Shell Troll", "Bear", "Wild Dog", "Gnoll Scout", "Trifelinikis", "Rattlesnake", "Hobgoblin Soldier"];
-var    PRIORITY_TARGETS = ["Skeletal Scout", "Hobgoblin Hunter", "Hobgoblin Berserker"];
+var    PRIORITY_TARGETS = ["Skeletal Scout", "Hobgoblin Hunter", "Hobgoblin Berserker", "Skeletal Duelist"];
 var      PRIORITY_ITEMS = ["Arena Ticket", "Sapphire", "Ruby", "Spiked Collar", "Diamond", "Emerald", "Orc Shaman Staff"];
-var        IGNORE_ITEMS = ["Hardened Leather Gloves"];
+var        IGNORE_ITEMS = ["Hardened Leather Gloves", "Leather Armor and Cloak", "Banded Mail Boots"];
 var        AUTO_EXPLORE = true;
 /***************************/
 
@@ -153,30 +153,30 @@ function autoExplore(){
             if( loc.campable ){
                 setTimeout(function(){
                     window.createCampsite();
-                }, 2000);
+                }, 5000);
             }
             else{
                 setTimeout(function(){
                     window.doExplore(true);
-                }, 2000);
+                }, 5000);
             }
         }else{
             setTimeout(function(){ location.reload(); }, 60000);
         }
 	}
-    if( AUTO_EXPLORE && player.health > STOP_ATTACK && loc.type === "camp" && loc.enemiesNearby ){
+        if( AUTO_EXPLORE && player.health > STOP_ATTACK && loc.type === "camp" && loc.enemiesNearby ){
          setTimeout(function(){
-                    window.defend();
-                }, 2000);
+                    window.campsiteDefend();
+                }, 5000);
     }
 }
 
 function keepPunching() {
     //for a more CircleMUD feel
     if(AUTO_SWING) {
-        if( loc.type==="in combat!" && PESTS.indexOf(loc.target) > -1 ){
+        if( loc.type==="in combat!" && PESTS.indexOf(loc.target) > -1 && loc.isPartyLeader ){
 			combatMessage("Pest Protection: " + loc.target + " - AUTO-FLEE");
-            window.combatEscape();
+            setTimeout(function(){window.combatEscape();}, 2000);
         }
         if( (loc.type==="in a fight!" || loc.type==="in combat!"  )&& window.urlParams.type==="attack" && player.health>STOP_ATTACK) {
             if(window.urlParams.hand==="RightHand")
@@ -203,7 +203,7 @@ function keepPunching() {
 }
 
 function autoLeave(){
-    if(AUTO_LEAVE_FORGET && loc.type==="combat site") {
+    if(AUTO_LEAVE_FORGET && loc.type==="combat site" && loc.isPartyLeader ) {
                 if(window.gotGold===true && window.allItemsLooted === true) {
                     $('a[onclick^="leaveAndForgetCombatSite"]').click();
         }
@@ -289,11 +289,14 @@ function getRareLoot() {
             });
             //console.log(availableItems);
             var pickupUrl = "ServletCharacterControl?type=collectItem&itemId=";
-            var lootArr = ["rare", "unique", "epic"];
 
 			//figure out which items we want to loot, add them to the loot list
 			availableItems.forEach( function(item){
-				if( (lootArr.indexOf(item.itemRarity) > -1 && (IGNORE_ITEMS.indexOf(item.itemName) < 0)) || PRIORITY_ITEMS.indexOf(item.itemName) > -1 )
+                //if item is gold or purp...get it
+                if( item.itemRarity === "unique" || item.itemRarity === "epic"){
+                    lootTheseItems.push(item);
+                }
+				else if( (item.itemRarity === "rare"  && (IGNORE_ITEMS.indexOf(item.itemName) < 0)) || PRIORITY_ITEMS.indexOf(item.itemName) > -1 )
 					{
 						lootTheseItems.push(item);
 					}});
@@ -487,8 +490,24 @@ function getLocation() {
     loc.target = $("#inBannerCombatantWidget > a") !== null ? $("#inBannerCombatantWidget").find("a").first().text() : null;
 	var locText = $('#locationDescription').text();
 	loc.isCombatLocation = locText.indexOf("This is the location where a battle took place, but the battle is over now.") > 0;
+    loc.playerName = $("a[rel^=#profile]:eq(0)").text();
     var enemyText = $(".main-description:contains('The monster activity in this area seems')").text();
-    loc.enemiesNearby = enemyText.indexOf("none") < 0;
+    loc.inParty = ($("a[onclick^=leaveParty]").length>0)?true:false;
+    if( loc.inParty ){
+       loc.isPartyLeader = $("div:contains('" + loc.playerName + "') > div:contains('(Leader)')").length > 0 ? true:false;
+    }else{
+       loc.isPartyLeader = true;
+    }
+    if(loc.type=="camp"){
+        var campIntegrity = $("p:contains('Camp integrity:') > span").text();
+        if( campIntegrity !== ("100.00%")){
+           loc.enemiesNearby = true;
+        }
+    }else{
+        var enemyText = $(".main-description:contains('The monster activity in this area seems')").text();
+        loc.enemiesNearby = enemyText.indexOf("none") < 0;
+    }
+    
     return loc;
 }
 
