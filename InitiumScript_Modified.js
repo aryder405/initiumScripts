@@ -22,14 +22,14 @@ var           AUTO_REST = true;  //auto rest if injured and in restable area
 var          AUTO_SWING = true; //repeats attack after your initial attack
 var   AUTO_LEAVE_FORGET = true; //automatically clicks 'Leave and Forget' after a battle
 var           AUTO_FLEE = 0;    //percent of health to flee automatically. 0 turns it off
-var         STOP_ATTACK = 75;
+var         STOP_ATTACK = 80;
 var AUTO_CONFIRM_POPUPS = true; //confirms popups like camp name so you can keep your fingers to the metal!
 var        HIDE_VERSION = true; //this will hide pro icon with the version number (you jerk)
-var 		      PESTS = ["Troll", "Orc Footman", "Shell Troll", "Bear", "Wild Dog", "Gnoll Scout", "Trifelinikis", "Rattlesnake", "Hobgoblin Soldier"];
+var 		      PESTS = ["Troll", "Orc Footman", "Shell Troll", "Bear", "Wild Dog", "Gnoll Scout", "Trifelinikis", "Rattlesnake", "Hobgoblin Soldier", "Bulette"];
 var    PRIORITY_TARGETS = ["Skeletal Scout", "Hobgoblin Hunter", "Hobgoblin Berserker", "Skeletal Duelist"];
-var      PRIORITY_ITEMS = ["Arena Ticket", "Sapphire", "Ruby", "Spiked Collar", "Diamond", "Emerald", "Orc Shaman Staff"];
+var      PRIORITY_ITEMS = ["Arena Ticket", "Chipped Sapphire", "Chipped Ruby", "Spiked Collar", "Chipped Diamond", "Chipped Emerald", "Orc Shaman Staff"];
 var        IGNORE_ITEMS = ["Hardened Leather Gloves", "Leather Armor and Cloak", "Banded Mail Boots"];
-var        AUTO_EXPLORE = true;
+var     ATTACK_INTERVAL = 4000;
 /***************************/
 
 var $=window.jQuery,loc={},player={};
@@ -57,13 +57,53 @@ var krill=getThisPartyStarted();
 //EXTRA HOTKEYS: C for create campsite, H for show hidden paths
 document.addEventListener('keydown', function(e) {
     if(e.target.nodeName!='INPUT' || e.srcElement.nodeName != 'INPUT') {
-        if(e.keyCode===67)  
-        { window.createCampsite(); }
-        if(e.keyCode===72) 
-        { window.location.replace("/main.jsp?showHiddenPaths=true"); }
+        if(e.keyCode===67)
+        {
+            window.createCampsite();
+        }
+        if(e.keyCode===72)
+        {
+            window.location.replace("/main.jsp?showHiddenPaths=true");
+        }
     }
 }, false);
 
+function openLootLogBlob(){
+    var lootLog = JSON.parse(localStorage.LootLogs);
+    var blob = new Blob( [lootLog] , {type: "text/html"});
+    var blobURL = URL.createObjectURL(blob);
+    window.open(blobURL);
+}
+function addButtons(){
+	getLootLogButton();
+	getExploreButton();
+}
+function getLootLogButton(){
+    if( localStorage.LootLogs ){
+        var b = $('<button/>',
+                  {
+            text: 'Loot Log',
+            click: function () { openLootLogBlob(); }
+        });
+        var b2 = $('<button/>',
+                   {
+            text: 'Clear Log',
+            click: function () { localStorage.removeItem("LootLogs"); }
+        });
+        $("#buttonBar").append(b).append(b2);
+    }
+}
+function getExploreButton(){
+    var autoExplore = localStorage.getItem("autoExplore") || false;
+
+    var b = $('<button/>',
+              {
+        text: 'Auto Explore',
+        style: "color: " + (autoExplore ? "green" : "red"),
+        click: function () { localStorage.setItem("autoExplore", !autoExplore); location.reload(); }
+    });
+	$("#buttonBar").append(b);
+}
 //add shop item stats to shop view
 function loadShopItemDetails() {
     window.FLAG_LOADSHOPITEMS=true;
@@ -147,7 +187,8 @@ function loadLocalMerchantDetails() {
 }
 
 function autoExplore(){
-	if(AUTO_EXPLORE && player.health > STOP_ATTACK && loc.type !== "combat site" && loc.type !== "camp"){
+    var autoExplore = localStorage.getItem("autoExplore");
+    if(autoExplore && player.health > STOP_ATTACK && loc.type !== "combat site" && loc.type !== "camp"){
         showMessage("----AUTO EXPLORING----", "yellow");
         if(loc.enemiesNearby){
             if( loc.campable ){
@@ -163,11 +204,11 @@ function autoExplore(){
         }else{
             setTimeout(function(){ location.reload(); }, 60000);
         }
-	}
-        if( AUTO_EXPLORE && player.health > STOP_ATTACK && loc.type === "camp" && loc.enemiesNearby ){
-         setTimeout(function(){
-                    window.campsiteDefend();
-                }, 5000);
+    }
+    if( autoExplore && player.health > STOP_ATTACK && loc.type === "camp" && loc.enemiesNearby ){
+        setTimeout(function(){
+            window.campsiteDefend();
+        }, 5000);
     }
 }
 
@@ -175,19 +216,19 @@ function keepPunching() {
     //for a more CircleMUD feel
     if(AUTO_SWING) {
         if( loc.type==="in combat!" && PESTS.indexOf(loc.target) > -1 && loc.isPartyLeader ){
-			combatMessage("Pest Protection: " + loc.target + " - AUTO-FLEE");
-            setTimeout(function(){window.combatEscape();}, 2000);
+            combatMessage("Pest Protection: " + loc.target + " - AUTO-FLEE");
+            setTimeout(function(){window.combatEscape();}, 5000);
         }
         if( (loc.type==="in a fight!" || loc.type==="in combat!"  )&& window.urlParams.type==="attack" && player.health>STOP_ATTACK) {
             if(window.urlParams.hand==="RightHand")
-                window.combatAttackWithRightHand();
+                setTimeout(function(){window.combatAttackWithRightHand();}, ATTACK_INTERVAL);
             else
-                window.combatAttackWithLeftHand();
+                setTimeout(function(){window.combatAttackWithLeftHand();}, ATTACK_INTERVAL);
             combatMessage("Attacking with "+window.urlParams.hand,"AUTO-SWING");
             return;
         }
         if( (loc.type==="in a fight!" || loc.type==="in combat!"  ) && PRIORITY_TARGETS.indexOf(loc.target) > -1 ){
-            window.combatAttackWithLeftHand();
+            setTimeout(function(){window.combatAttackWithLeftHand();}, ATTACK_INTERVAL);
             combatMessage("PRIORITY TARGET: " + loc.target);
             return;
         }
@@ -199,13 +240,12 @@ function keepPunching() {
         }
     }
     if(AUTO_REST && loc.rest===true && player.health<100) window.doRest();
-    
 }
 
 function autoLeave(){
     if(AUTO_LEAVE_FORGET && loc.type==="combat site" && loc.isPartyLeader ) {
-                if(window.gotGold===true && window.allItemsLooted === true) {
-                    $('a[onclick^="leaveAndForgetCombatSite"]').click();
+        if(window.gotGold===true && window.allItemsLooted === true) {
+            $('a[onclick^="leaveAndForgetCombatSite"]').click();
         }
     }
 }
@@ -245,8 +285,10 @@ function getLocalGold() {
         var battleGoldLink=$(".main-item-container").find('a[onclick*="collectDogecoin"]');
         if(goldLinks.length===0){
             window.gotGold=true;
-            return showMessage("No gold laying around.","gray");
-        };
+            showMessage("No gold laying around.","gray");
+            autoLeave();
+            return;
+        }
         showMessage("<img src='"+window.IMG_GOLDCOIN+"' class='coin-tiny'>&nbsp;<span id='picking-gold-status'>Found gold! Picking it up.</span>","yellow");
         goldLinks.each(function(index) {
             var getGoldURL=$(this).attr("onclick").split('"')[1]+"&ajax=true&v="+window.verifyCode;
@@ -272,15 +314,15 @@ function getRareLoot() {
     var localCharsURL="/locationcharacterlist.jsp";
     var lootItem = {};
     var availableItems = [];
-	var lootTheseItems = [];
-    
+    var lootTheseItems = [];
+
     $.ajaxQueue({
         url: localCharsURL,
     }).done(function(data) {
         if( loc.isCombatLocation ) {
             $(".main-item-container").find("a[rel^=viewitem]").each( function(index){
                 lootItem = {
-					itemAnchor : $(this).closest(".main-item-container").find("a[onclick*=collectItem]").eq(0),
+                    itemAnchor : $(this).closest(".main-item-container").find("a[onclick*=collectItem]").eq(0),
                     itemID : $(this).attr("rel").split('=')[1],
                     itemName : $(this).find(".main-item-name").text(),
                     itemRarity : $(this).hasClass("item-rare") ? "rare" : $(this).hasClass("item-unique") ? "unique" : $(this).hasClass("item-epic") ? "epic" : "common",
@@ -290,42 +332,52 @@ function getRareLoot() {
             //console.log(availableItems);
             var pickupUrl = "ServletCharacterControl?type=collectItem&itemId=";
 
-			//figure out which items we want to loot, add them to the loot list
-			availableItems.forEach( function(item){
+            //figure out which items we want to loot, add them to the loot list
+            availableItems.forEach( function(item){
                 //if item is gold or purp...get it
                 if( item.itemRarity === "unique" || item.itemRarity === "epic"){
                     lootTheseItems.push(item);
                 }
-				else if( (item.itemRarity === "rare"  && (IGNORE_ITEMS.indexOf(item.itemName) < 0)) || PRIORITY_ITEMS.indexOf(item.itemName) > -1 )
-					{
-						lootTheseItems.push(item);
-					}});
+                else if( (item.itemRarity === "rare"  && (IGNORE_ITEMS.indexOf(item.itemName) < 0)) || PRIORITY_ITEMS.indexOf(item.itemName) > -1 )
+                {
+                    lootTheseItems.push(item);
+                }});
 
-			//nothing to loot
+            //nothing to loot
             if(lootTheseItems.length === 0){
-				window.allItemsLooted = true;
+                window.allItemsLooted = true;
                 autoLeave();
                 return;
-			}
-			window.lootCount = lootTheseItems.length;
+            }
+            window.lootCount = lootTheseItems.length;
 
-			//loot the items in the loot list
-			lootTheseItems.forEach( function(item){
-				var url = pickupUrl + item.itemID +"&ajax=true&v="+window.verifyCode;
-                     $.ajaxQueue({url: url, foundItem:item }).done(function(data) {
-                         console.info("Picked Up LOOT: " + item.itemName);
-                         item.itemAnchor.text("LOOTED!").css({"color":"yellow"});
-                         window.itemsLooted++;
-                         if(window.lootCount === window.itemsLooted){
-                            window.allItemsLooted = true;
-                             autoLeave();
-                           }
-						});
-			});
+            //loot the items in the loot list
+            lootTheseItems.forEach( function(item){
+                var url = pickupUrl + item.itemID +"&ajax=true&v="+window.verifyCode;
+                $.ajaxQueue({url: url, foundItem:item }).done(function(data) {
+                    updateLootLog(item);
+                    item.itemAnchor.text("LOOTED!").css({"color":"yellow"});
+                    window.itemsLooted++;
+                    if(window.lootCount === window.itemsLooted){
+                        window.allItemsLooted = true;
+                        autoLeave();
+                    }
+                });
+            });
         }
     });
 }
 
+function updateLootLog(item){
+    item.Date = new Date().toLocaleString();
+    var existingLogs = JSON.parse(localStorage.getItem("LootLogs"));
+    if( existingLogs === null){
+        existingLogs = "";
+    }
+    var log = "<p>(" + item.Date + ") - " + item.itemName + " " + item.itemRarity + " " + item.itemID + "</p>";
+    existingLogs+=(log);
+    localStorage.setItem("LootLogs", JSON.stringify(existingLogs));
+}
 
 function getLocalStuff() {
     var localItemsList,localItemsURL="/ajax_moveitems.jsp?preset=location";
@@ -480,34 +532,33 @@ function formatItemStats(thang) {
 function getLocation() {
     var loc={name:$(".header-location").text()};
     if(loc.name.indexOf("Combat site:")!==-1)
-	{
-		loc.type=($(".character-display-box").length>1)?"in combat!":"combat site";
-	} //if we're in a combat site, are we in combat or not?
+    {
+        loc.type=($(".character-display-box").length>1)?"in combat!":"combat site";
+    } //if we're in a combat site, are we in combat or not?
     else if(loc.name.indexOf("Camp:")!==-1) { loc.type="camp"; } //if we ain't fighting, are are we in a camp?
     else { loc.type=(window.biome)?window.biome.toLowerCase():"in a fight!"; } //if all else fails, i guess we're outside
     loc.campable=($("a[onclick^=createCampsite]").length>0)?true:false;
     loc.rest=($("a[onclick^=doRest]").length>0)?true:false;
     loc.target = $("#inBannerCombatantWidget > a") !== null ? $("#inBannerCombatantWidget").find("a").first().text() : null;
-	var locText = $('#locationDescription').text();
-	loc.isCombatLocation = locText.indexOf("This is the location where a battle took place, but the battle is over now.") > 0;
+    //var locText = $('#locationDescription').text();
+    loc.isCombatLocation = loc.type === "combat site" ? true : false;
     loc.playerName = $("a[rel^=#profile]:eq(0)").text();
     var enemyText = $(".main-description:contains('The monster activity in this area seems')").text();
-    loc.inParty = ($("a[onclick^=leaveParty]").length>0)?true:false;
+    loc.inParty = $("a[onclick^=leaveParty]").length>0;
     if( loc.inParty ){
-       loc.isPartyLeader = $("div:contains('" + loc.playerName + "') > div:contains('(Leader)')").length > 0 ? true:false;
+        loc.isPartyLeader = $(".boldbox").find("div:contains('" + loc.playerName + "')").find("div:contains('Leader')").length > 0;
     }else{
-       loc.isPartyLeader = true;
+        loc.isPartyLeader = true;
     }
     if(loc.type=="camp"){
         var campIntegrity = $("p:contains('Camp integrity:') > span").text();
         if( campIntegrity !== ("100.00%")){
-           loc.enemiesNearby = true;
+            loc.enemiesNearby = true;
         }
     }else{
         var enemyText = $(".main-description:contains('The monster activity in this area seems')").text();
         loc.enemiesNearby = enemyText.indexOf("none") < 0;
     }
-    
     return loc;
 }
 
@@ -544,16 +595,16 @@ function getThisPartyStarted() {
     window.FLAG_LOADSHOPS=false;
     window.FLAG_LOADSHOPITEMS=false;
     window.gotGold=false;
-	window.allItemsLooted = false;
+    window.allItemsLooted = false;
     window.lootCount = 0;
-	window.itemsLooted = 0;
+    window.itemsLooted = 0;
     window.localItems={};
     window.urlParams=getUrlParams();
     //init stuff
     updateCSS();
     statDisplay();
     getLocalGold();
-    getRareLoot();
+    addButtons();
     getLocalStuff();
     //mutation observer watches the dom
     MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
@@ -568,14 +619,15 @@ function getThisPartyStarted() {
         keepPunching();
         autoConfirmPopups();
         autoExplore();
+        getRareLoot();
     });
     return true;
 }
 
 function autoConfirmPopups(){
     if(AUTO_CONFIRM_POPUPS){
-                $('#popups').find(".popup_confirm_yes, .popup_message_okay").click();//auto-click confirm yes button
-            }
+        $('#popups').find(".popup_confirm_yes, .popup_message_okay").click();//auto-click confirm yes button
+    }
 }
 
 //do stuff when dom changes!
