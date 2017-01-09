@@ -94,13 +94,13 @@ function getLootLogButton(){
     }
 }
 function getExploreButton(){
-    var autoExplore = localStorage.getItem("autoExplore") || false;
+    var autoExplore = JSON.parse(localStorage.getItem("autoExplore")) || false;
 
     var b = $('<button/>',
               {
         text: 'Auto Explore',
-        style: "color: " + (autoExplore ? "green" : "red"),
-        click: function () { localStorage.setItem("autoExplore", !autoExplore); location.reload(); }
+        style: "color: " + (autoExplore === true ? "green" : "red"),
+        click: function () { localStorage.setItem("autoExplore", JSON.stringify(!autoExplore)); location.reload(); }
     });
 	$("#buttonBar").append(b);
 }
@@ -187,8 +187,8 @@ function loadLocalMerchantDetails() {
 }
 
 function autoExplore(){
-    var autoExplore = localStorage.getItem("autoExplore");
-    if(autoExplore && player.health > STOP_ATTACK && loc.type !== "combat site" && loc.type !== "camp"){
+    var autoExplore = JSON.parse(localStorage.getItem("autoExplore"));
+    if( autoExplore === true && player.health > STOP_ATTACK && loc.type !== "combat site" && loc.type !== "camp"){
         showMessage("----AUTO EXPLORING----", "yellow");
         if(loc.enemiesNearby){
             if( loc.campable ){
@@ -205,7 +205,7 @@ function autoExplore(){
             setTimeout(function(){ location.reload(); }, 60000);
         }
     }
-    if( autoExplore && player.health > STOP_ATTACK && loc.type === "camp" && loc.enemiesNearby ){
+    if( autoExplore === true && player.health > STOP_ATTACK && loc.type === "camp" && loc.enemiesNearby ){
         setTimeout(function(){
             window.campsiteDefend();
         }, 5000);
@@ -217,7 +217,7 @@ function keepPunching() {
     if(AUTO_SWING) {
         if( loc.type==="in combat!" && PESTS.indexOf(loc.target) > -1 && loc.isPartyLeader ){
             combatMessage("Pest Protection: " + loc.target + " - AUTO-FLEE");
-            setTimeout(function(){window.combatEscape();}, 5000);
+            setTimeout(function(){window.combatEscape();}, 2000);
         }
         if( (loc.type==="in a fight!" || loc.type==="in combat!"  )&& window.urlParams.type==="attack" && player.health>STOP_ATTACK) {
             if(window.urlParams.hand==="RightHand")
@@ -227,7 +227,7 @@ function keepPunching() {
             combatMessage("Attacking with "+window.urlParams.hand,"AUTO-SWING");
             return;
         }
-        if( (loc.type==="in a fight!" || loc.type==="in combat!"  ) && PRIORITY_TARGETS.indexOf(loc.target) > -1 ){
+        if( (loc.type==="in a fight!" || loc.type==="in combat!"  ) && PRIORITY_TARGETS.indexOf(loc.target) > -1 && player.health>STOP_ATTACK ){
             setTimeout(function(){window.combatAttackWithLeftHand();}, ATTACK_INTERVAL);
             combatMessage("PRIORITY TARGET: " + loc.target);
             return;
