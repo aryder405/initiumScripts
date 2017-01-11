@@ -22,17 +22,18 @@ var           AUTO_REST = true;  //auto rest if injured and in restable area
 var          AUTO_SWING = true; //repeats attack after your initial attack
 var   AUTO_LEAVE_FORGET = true; //automatically clicks 'Leave and Forget' after a battle
 var           AUTO_FLEE = 0;    //percent of health to flee automatically. 0 turns it off
-var         STOP_ATTACK = 80;
+var         STOP_ATTACK = 70;
 var AUTO_CONFIRM_POPUPS = true; //confirms popups like camp name so you can keep your fingers to the metal!
 var        HIDE_VERSION = true; //this will hide pro icon with the version number (you jerk)
 var 		      PESTS = ["Troll", "Orc Footman", "Shell Troll", "Bear", "Wild Dog", "Gnoll Scout", "Trifelinikis",
-                           "Rattlesnake", "Hobgoblin Soldier", "Bulette", "Panther"];
+                           "Rattlesnake", "Hobgoblin Soldier", "Bulette", "Panther", "Desert Bandit"];
 var    PRIORITY_TARGETS = ["Skeletal Scout", "Hobgoblin Hunter", "Hobgoblin Berserker", "Skeletal Duelist", "Acolyte",
-                          "Thief", "Brigand"];
+                          "Thief", "Brigand", "Kobold", "Kobold Archer"];
 var      PRIORITY_ITEMS = ["Arena Ticket", "Chipped Sapphire", "Chipped Ruby", "Spiked Collar", "Chipped Diamond",
-                           "Chipped Emerald", "Orc Shaman Staff", "Jungle Macuahuitl"];
+                           "Chipped Emerald", "Orc Shaman Staff", "Large Chest", "Small Chest"];
 var        IGNORE_ITEMS = ["Hardened Leather Gloves", "Leather Armor and Cloak", "Banded Mail Boots", "Linen Pants", "Linen Shirt",
-                          "Leather Boots", "Leather Pants", "Leather Gloves", "Leather Cap", "Leather Armor", "Studded Leather", "Wooden Shield"];
+                          "Leather Boots", "Leather Pants", "Leather Gloves", "Leather Cap", "Leather Armor", "Studded Leather",
+                           "Open Faced Helm","Wooden Shield", "Light Steel Shield", "Light Wooden Shield"];
 var       EXPLORE_AREAS = ["Temple Ruins"];//AutoEploring Areas to W on...E on everything else
 var     ATTACK_INTERVAL = 2000;
 /***************************/
