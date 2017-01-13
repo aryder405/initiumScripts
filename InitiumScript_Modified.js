@@ -26,14 +26,14 @@ var         STOP_ATTACK = 70;
 var AUTO_CONFIRM_POPUPS = true; //confirms popups like camp name so you can keep your fingers to the metal!
 var        HIDE_VERSION = true; //this will hide pro icon with the version number (you jerk)
 var 		      PESTS = ["Troll", "Orc Footman", "Shell Troll", "Bear", "Wild Dog", "Gnoll Scout", "Trifelinikis",
-                           "Rattlesnake", "Hobgoblin Soldier", "Bulette", "Panther", "Desert Bandit"];
-var    PRIORITY_TARGETS = ["Skeletal Scout", "Hobgoblin Hunter", "Hobgoblin Berserker", "Skeletal Duelist", "Acolyte",
+                           "Rattlesnake", "Hobgoblin Soldier", "Bulette", "Panther", "Desert Bandit","Whispering Sandspiral", "Acolyte"];
+var    PRIORITY_TARGETS = ["Skeletal Scout", "Hobgoblin Hunter", "Hobgoblin Berserker", "Skeletal Duelist",
                           "Thief", "Brigand", "Kobold", "Kobold Archer"];
 var      PRIORITY_ITEMS = ["Arena Ticket", "Chipped Sapphire", "Chipped Ruby", "Spiked Collar", "Chipped Diamond",
                            "Chipped Emerald", "Orc Shaman Staff", "Large Chest", "Small Chest"];
 var        IGNORE_ITEMS = ["Hardened Leather Gloves", "Leather Armor and Cloak", "Banded Mail Boots", "Linen Pants", "Linen Shirt",
                           "Leather Boots", "Leather Pants", "Leather Gloves", "Leather Cap", "Leather Armor", "Studded Leather",
-                           "Open Faced Helm","Wooden Shield", "Light Steel Shield", "Light Wooden Shield"];
+                           "Open Faced Helm","Wooden Shield", "Light Steel Shield", "Light Wooden Shield", "Padded Leather Gloves"];
 var       EXPLORE_AREAS = ["Temple Ruins"];//AutoEploring Areas to W on...E on everything else
 var     ATTACK_INTERVAL = 2000;
 /***************************/
@@ -81,34 +81,43 @@ function openLootLogBlob(){
     window.open(blobURL);
 }
 function addButtons(){
-	getLootLogButton();
-	getExploreButton();
+    var allButtons = $('<div/>', { style: 'margin:5px;' } );
+	var lootButtonDiv = getLootLogButton();
+	var exploreButtonDiv = getExploreButton();
+
+    allButtons.append(lootButtonDiv).append(exploreButtonDiv);
+    $(".chat_box").before(allButtons);
 }
 function getLootLogButton(){
+    var lootDiv = $('<div/>',  { style: 'display:inline;' });
     if( localStorage.LootLogs ){
         var b = $('<button/>',
                   {
             text: 'Loot Log',
+            style: 'margin:5px;',
             click: function () { openLootLogBlob(); }
         });
         var b2 = $('<button/>',
                    {
             text: 'Clear Log',
+            style: 'margin:5px;',
             click: function () { localStorage.removeItem("LootLogs"); }
         });
-        $("#buttonBar").append(b).append(b2);
+        lootDiv.append(b).append(b2);
     }
+    return lootDiv;
 }
 function getExploreButton(){
     var autoExplore = JSON.parse(localStorage.getItem("autoExplore")) || false;
-
+    var autoExploreDiv = $('<div/>',  { style: 'display:inline;' });
     var b = $('<button/>',
               {
         text: 'Auto Explore',
-        style: "color: " + (autoExplore === true ? "green" : "red"),
+        style: "margin:5px; color: " + (autoExplore === true ? "green" : "red"),
         click: function () { localStorage.setItem("autoExplore", JSON.stringify(!autoExplore)); location.reload(); }
     });
-	$("#buttonBar").append(b);
+	autoExploreDiv.append(b);
+    return autoExploreDiv;
 }
 
 function autoExplore(){
