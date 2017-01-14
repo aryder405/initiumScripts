@@ -22,7 +22,7 @@ var           AUTO_REST = true;  //auto rest if injured and in restable area
 var          AUTO_SWING = true; //repeats attack after your initial attack
 var   AUTO_LEAVE_FORGET = true; //automatically clicks 'Leave and Forget' after a battle
 var           AUTO_FLEE = 0;    //percent of health to flee automatically. 0 turns it off
-var         STOP_ATTACK = 70;
+var         STOP_ATTACK = 50;
 var AUTO_CONFIRM_POPUPS = true; //confirms popups like camp name so you can keep your fingers to the metal!
 var        HIDE_VERSION = true; //this will hide pro icon with the version number (you jerk)
 var 		      PESTS = ["Troll", "Orc Footman", "Shell Troll", "Bear", "Wild Dog", "Gnoll Scout", "Trifelinikis",
@@ -34,7 +34,7 @@ var      PRIORITY_ITEMS = ["Arena Ticket", "Chipped Sapphire", "Chipped Ruby", "
 var        IGNORE_ITEMS = ["Hardened Leather Gloves", "Leather Armor and Cloak", "Banded Mail Boots", "Linen Pants", "Linen Shirt",
                           "Leather Boots", "Leather Pants", "Leather Gloves", "Leather Cap", "Leather Armor", "Studded Leather",
                            "Open Faced Helm","Wooden Shield", "Light Steel Shield", "Light Wooden Shield", "Padded Leather Gloves"];
-var       EXPLORE_AREAS = ["Temple Ruins"];//AutoEploring Areas to W on...E on everything else
+var       EXPLORE_AREAS = [];//E on these site names, W on everything else
 var     ATTACK_INTERVAL = 2000;
 /***************************/
 
@@ -123,20 +123,23 @@ function getExploreButton(){
 function autoExplore(){
     var autoExplore = JSON.parse(localStorage.getItem("autoExplore"));
     if( autoExplore === true && player.health > STOP_ATTACK && loc.type !== "combat site" && loc.type !== "camp"){
-        showMessage("----AUTO EXPLORING----", "yellow");
+        
         if(loc.enemiesNearby){
             if( loc.campable ){
                 setTimeout(function(){
+					showMessage("----CREATING CAMPSITE----", "yellow");
                     window.createCampsite();
                 }, 5000);
             }
             else{
                 if( EXPLORE_AREAS.indexOf( loc.name ) > -1 ){
                     setTimeout(function(){
+						showMessage("----EXPLORING----", "yellow");
                         window.doExplore(false);
                     }, 5000);
                 }else{
                     setTimeout(function(){
+						showMessage("----EXPLORING (IGNORING COMBAT SITES)----", "yellow");
                         window.doExplore(true);
                     }, 5000);
                 }
@@ -147,6 +150,7 @@ function autoExplore(){
     }
     if( autoExplore === true && player.health > STOP_ATTACK && loc.type === "camp" && loc.enemiesNearby ){
         setTimeout(function(){
+			showMessage("----DEFENDING----", "yellow");
             window.campsiteDefend();
         }, 5000);
     }
@@ -333,6 +337,14 @@ function getLocation() {
     loc.campable=($("a[onclick^=createCampsite]").length>0)?true:false;
     loc.rest=($("a[onclick^=doRest]").length>0)?true:false;
     loc.target = $("#inBannerCombatantWidget > a") !== null ? $("#inBannerCombatantWidget").find("a").first().text() : null;
+    var enemyEquipment = [];
+    var enemyEquipDivs = $("#inBannerCombatantWidget").find(".avatar-equip-backing > div[class^=avatar-equip]").each( function() {
+        var equip = {
+            slot: $(this).attr('class').split('equip-')[1],
+            image: $(this).css('background-image').split('/')[5].replace('.png")', ''),
+        };
+        enemyEquipment.push(equip);
+    } );
     //var locText = $('#locationDescription').text();
     loc.isCombatLocation = loc.type === "combat site" ? true : false;
     loc.playerName = $("a[rel^=#profile]:eq(0)").text();
