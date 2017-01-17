@@ -22,18 +22,35 @@ var           AUTO_REST = true;  //auto rest if injured and in restable area
 var          AUTO_SWING = true; //repeats attack after your initial attack
 var   AUTO_LEAVE_FORGET = true; //automatically clicks 'Leave and Forget' after a battle
 var           AUTO_FLEE = 0;    //percent of health to flee automatically. 0 turns it off
-var         STOP_ATTACK = 50;
+var         STOP_ATTACK = 80;
 var AUTO_CONFIRM_POPUPS = true; //confirms popups like camp name so you can keep your fingers to the metal!
 var        HIDE_VERSION = true; //this will hide pro icon with the version number (you jerk)
 var 		      PESTS = ["Troll", "Orc Footman", "Shell Troll", "Bear", "Wild Dog", "Gnoll Scout", "Trifelinikis",
-                           "Rattlesnake", "Hobgoblin Soldier", "Bulette", "Panther", "Desert Bandit","Whispering Sandspiral", "Acolyte"];
+                           "Rattlesnake", "Hobgoblin Soldier", "Bulette", "Panther", "Desert Bandit","Whispering Sandspiral",
+							"Wild Dog", "Acolyte", "Bloodsucker Worker", "Bloodsucker Drone", "Lizardfolk Soldier", 
+                            "Lizardfolk Hunter", "Kobold", "Kobold Archer"];
+var     PRIORITY_EQUIPS = [
+							//Grace
+                            { name: "Lizardfolk Soldier",
+                              slot:"helmet" },
+                            { name: "Lizardfolk Hunter",
+                              slot: "helmet" },
+							//Kobolds - SE and Battleaxes
+						    { name: "Kobold",
+                              slot: "leftHand" },
+						    { name: "Kobold Archer",
+                              slot: "gloves-right" },
+						    { name: "Kobold Archer",
+                              slot: "gloves-left" },
+                          ];
 var    PRIORITY_TARGETS = ["Skeletal Scout", "Hobgoblin Hunter", "Hobgoblin Berserker", "Skeletal Duelist",
                           "Thief", "Brigand", "Kobold", "Kobold Archer"];
 var      PRIORITY_ITEMS = ["Arena Ticket", "Chipped Sapphire", "Chipped Ruby", "Spiked Collar", "Chipped Diamond",
                            "Chipped Emerald", "Orc Shaman Staff", "Large Chest", "Small Chest"];
 var        IGNORE_ITEMS = ["Hardened Leather Gloves", "Leather Armor and Cloak", "Banded Mail Boots", "Linen Pants", "Linen Shirt",
                           "Leather Boots", "Leather Pants", "Leather Gloves", "Leather Cap", "Leather Armor", "Studded Leather",
-                           "Open Faced Helm","Wooden Shield", "Light Steel Shield", "Light Wooden Shield", "Padded Leather Gloves"];
+                           "Open Faced Helm","Wooden Shield", "Light Steel Shield", "Light Wooden Shield", "Padded Leather Gloves",
+                          "Cloth Robe"];
 var       EXPLORE_AREAS = [];//E on these site names, W on everything else
 var     ATTACK_INTERVAL = 2000;
 /***************************/
@@ -122,8 +139,7 @@ function getExploreButton(){
 
 function autoExplore(){
     var autoExplore = JSON.parse(localStorage.getItem("autoExplore"));
-    if( autoExplore === true && player.health > STOP_ATTACK && loc.type !== "combat site" && loc.type !== "camp"){
-        
+    if( autoExplore === true && player.health > STOP_ATTACK && loc.type !== "combat site" && loc.type !== "camp"){        
         if(loc.enemiesNearby){
             if( loc.campable ){
                 setTimeout(function(){
@@ -159,7 +175,7 @@ function autoExplore(){
 function keepPunching() {
     //for a more CircleMUD feel
     if(AUTO_SWING) {
-        if( loc.type==="in combat!" && PESTS.indexOf(loc.target) > -1 && loc.isPartyLeader ){
+        if( (loc.type==="in combat!" && PESTS.indexOf(loc.target) > -1 && loc.isPartyLeader) && ( !checkTargetForPriorityEquip() )){
             combatMessage("Pest Protection: " + loc.target + " - AUTO-FLEE");
             setTimeout(function(){window.combatEscape();}, 2000);
         }
@@ -171,10 +187,12 @@ function keepPunching() {
             combatMessage("Attacking with "+window.urlParams.hand,"AUTO-SWING");
             return;
         }
-        if( (loc.type==="in a fight!" || loc.type==="in combat!"  ) && PRIORITY_TARGETS.indexOf(loc.target) > -1 && player.health>STOP_ATTACK ){
-            setTimeout(function(){window.combatAttackWithLeftHand();}, ATTACK_INTERVAL);
-            combatMessage("PRIORITY TARGET: " + loc.target);
-            return;
+        if( ( loc.type==="in a fight!" || loc.type==="in combat!"  ) &&
+            ( PRIORITY_TARGETS.indexOf(loc.target) > -1 || checkTargetForPriorityEquip() ) &&
+            player.health > STOP_ATTACK ){
+                setTimeout(function(){window.combatAttackWithLeftHand();}, ATTACK_INTERVAL);
+                combatMessage("PRIORITY TARGET: " + loc.target);
+                return;
         }
     }
     if(AUTO_FLEE>0) {
@@ -192,6 +210,11 @@ function autoLeave(){
             $('a[onclick^="leaveAndForgetCombatSite"]').click();
         }
     }
+}
+
+function checkTargetForPriorityEquip(){
+    return PRIORITY_EQUIPS.some( x => x.name === loc.target &&
+                                          loc.targetEquipment.some( eq => eq.slot === x.slot) );
 }
 
 //get hotkeys from buttons and put 'em on the map overlay
@@ -337,18 +360,18 @@ function getLocation() {
     loc.campable=($("a[onclick^=createCampsite]").length>0)?true:false;
     loc.rest=($("a[onclick^=doRest]").length>0)?true:false;
     loc.target = $("#inBannerCombatantWidget > a") !== null ? $("#inBannerCombatantWidget").find("a").first().text() : null;
-    var enemyEquipment = [];
-    var enemyEquipDivs = $("#inBannerCombatantWidget").find(".avatar-equip-backing > div[class^=avatar-equip]").each( function() {
+    loc.targetEquipment = [];
+    $("#inBannerCombatantWidget").find(".avatar-equip-backing > div[class^=avatar-equip]").each( function() {
         var equip = {
             slot: $(this).attr('class').split('equip-')[1],
-            image: $(this).css('background-image').split('/')[5].replace('.png")', ''),
+            image: $(this).css('background-image').split('/').length > 4 ? $(this).css('background-image').split('/')[5].replace('.png")', '') : null,
         };
-        enemyEquipment.push(equip);
+        loc.targetEquipment.push(equip);
     } );
+
     //var locText = $('#locationDescription').text();
     loc.isCombatLocation = loc.type === "combat site" ? true : false;
     loc.playerName = $("a[rel^=#profile]:eq(0)").text();
-    var enemyText = $(".main-description:contains('The monster activity in this area seems')").text();
     loc.inParty = $("a[onclick^=leaveParty]").length>0;
     if( loc.inParty ){
         loc.isPartyLeader = $(".boldbox").find("div:contains('" + loc.playerName + "')").find("div:contains('Leader')").length > 0;
