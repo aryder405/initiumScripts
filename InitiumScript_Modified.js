@@ -20,19 +20,22 @@
 var           AUTO_GOLD = true;  //auto get gold after battles and when entering a room
 var           AUTO_REST = true;  //auto rest if injured and in restable area
 var          AUTO_SWING = true; //repeats attack after your initial attack
-var   AUTO_LEAVE_FORGET = true; //automatically clicks 'Leave and Forget' after a battle
+var    SHOW_LOCAL_ITEMS = false;
+var   AUTO_LEAVE_FORGET = false; //automatically clicks 'Leave and Forget' after a battle
 var           AUTO_FLEE = 0;    //percent of health to flee automatically. 0 turns it off
-var         STOP_ATTACK = 80;
-var AUTO_CONFIRM_POPUPS = true; //confirms popups like camp name so you can keep your fingers to the metal!
+var AUTO_FLEE_THRESHOLD = 31;
+var         STOP_ATTACK = 70;
+var AUTO_CONFIRM_POPUPS = false; //confirms popups like camp name so you can keep your fingers to the metal!
 var        HIDE_VERSION = true; //this will hide pro icon with the version number (you jerk)
 var 		      PESTS = ["Troll", "Orc Footman", "Shell Troll", "Bear", "Wild Dog", "Gnoll Scout", "Trifelinikis",
                            "Rattlesnake", "Hobgoblin Soldier", "Bulette", "Panther", "Desert Bandit","Whispering Sandspiral",
-							"Wild Dog", "Acolyte", "Bloodsucker Worker", "Bloodsucker Drone", "Lizardfolk Soldier", 
-                            "Lizardfolk Hunter", "Kobold", "Kobold Archer"];
+							"Wild Dog", "Acolyte", "Bloodsucker Worker", "Bloodsucker Drone", "Lizardfolk Soldier",
+                            "Lizardfolk Hunter", "Kobold", "Kobold Archer", "Kappa", "Crocodile", "Giant Frog", "Lunar Fanatic",
+                            "Lunar Guard", "Werewolf"];
 var     PRIORITY_EQUIPS = [
 							//Grace
                             { name: "Lizardfolk Soldier",
-                              slot:"helmet" },
+                              slot: "helmet" },
                             { name: "Lizardfolk Hunter",
                               slot: "helmet" },
 							//Kobolds - SE and Battleaxes
@@ -44,15 +47,18 @@ var     PRIORITY_EQUIPS = [
                               slot: "gloves-left" },
                           ];
 var    PRIORITY_TARGETS = ["Skeletal Scout", "Hobgoblin Hunter", "Hobgoblin Berserker", "Skeletal Duelist",
-                          "Thief", "Brigand", "Kobold", "Kobold Archer"];
+                           "Thief", "Brigand", "Lunar Magistrate"];
 var      PRIORITY_ITEMS = ["Arena Ticket", "Chipped Sapphire", "Chipped Ruby", "Spiked Collar", "Chipped Diamond",
                            "Chipped Emerald", "Orc Shaman Staff", "Large Chest", "Small Chest"];
 var        IGNORE_ITEMS = ["Hardened Leather Gloves", "Leather Armor and Cloak", "Banded Mail Boots", "Linen Pants", "Linen Shirt",
-                          "Leather Boots", "Leather Pants", "Leather Gloves", "Leather Cap", "Leather Armor", "Studded Leather",
+                           "Leather Boots", "Leather Pants", "Leather Gloves", "Leather Cap", "Leather Armor", "Studded Leather",
                            "Open Faced Helm","Wooden Shield", "Light Steel Shield", "Light Wooden Shield", "Padded Leather Gloves",
-                          "Cloth Robe"];
+                           "Cloth Robe"];
 var       EXPLORE_AREAS = [];//E on these site names, W on everything else
 var     ATTACK_INTERVAL = 2000;
+var    AUTO_EXPLORE_INTERVAL = 60000;//in ms
+var    FLEE_AND_RECORD_PATHS = false;
+var          EXPLORE_TARGETS = ["Lizard King", "Protector of the Mountains"];
 /***************************/
 
 var $=window.jQuery,loc={},player={};
@@ -101,8 +107,10 @@ function addButtons(){
     var allButtons = $('<div/>', { style: 'margin:5px;' } );
 	var lootButtonDiv = getLootLogButton();
 	var exploreButtonDiv = getExploreButton();
-
-    allButtons.append(lootButtonDiv).append(exploreButtonDiv);
+    var input = $('<input/>', {id:"goToButton"});
+    var button = $('<button/>', {click: function(){ window.doGoto(event, $( '#goToButton').val() )} }).text("Go");
+    
+    allButtons.append(lootButtonDiv).append(exploreButtonDiv).append(input).append(button);
     $(".chat_box").before(allButtons);
 }
 function getLootLogButton(){
@@ -124,6 +132,13 @@ function getLootLogButton(){
     }
     return lootDiv;
 }
+
+function getGoToEventButton(){
+    var input = $('<input/>', {id:"goToButton"});
+    var button = $('<button/>', {click: function(){ window.doGoto(event, $( '#goToButton').val() )} }).text("Go");
+    input.append(button);
+    return input;
+}
 function getExploreButton(){
     var autoExplore = JSON.parse(localStorage.getItem("autoExplore")) || false;
     var autoExploreDiv = $('<div/>',  { style: 'display:inline;' });
@@ -139,7 +154,7 @@ function getExploreButton(){
 
 function autoExplore(){
     var autoExplore = JSON.parse(localStorage.getItem("autoExplore"));
-    if( autoExplore === true && player.health > STOP_ATTACK && loc.type !== "combat site" && loc.type !== "camp"){        
+    if( autoExplore === true && player.health > STOP_ATTACK && loc.type !== "combat site" && loc.type !== "camp"){
         if(loc.enemiesNearby){
             if( loc.campable ){
                 setTimeout(function(){
@@ -161,7 +176,7 @@ function autoExplore(){
                 }
             }
         }else{
-            setTimeout(function(){ location.reload(); }, 60000);
+            setTimeout(function(){ location.reload(); }, AUTO_EXPLORE_INTERVAL);
         }
     }
     if( autoExplore === true && player.health > STOP_ATTACK && loc.type === "camp" && loc.enemiesNearby ){
@@ -174,8 +189,17 @@ function autoExplore(){
 
 function keepPunching() {
     //for a more CircleMUD feel
+    if( loc.type==="in combat!" && FLEE_AND_RECORD_PATHS && loc.isPartyLeader && player.hp>AUTO_FLEE_THRESHOLD ){
+        if( EXPLORE_TARGETS.indexOf(loc.target) > -1 ){
+            //updateLog( loc.target + " : " + loc.currentPathID );
+        }
+        combatMessage("---AUTO FLEE AND RECORD PATHS ENABLED---");
+        setTimeout(function(){window.combatEscape();}, 2000);
+        return;
+    }
     if(AUTO_SWING) {
-        if( (loc.type==="in combat!" && PESTS.indexOf(loc.target) > -1 && loc.isPartyLeader) && ( !checkTargetForPriorityEquip() )){
+        //flee from crap
+        if( (loc.type==="in combat!" && PESTS.indexOf(loc.target) > -1 && loc.isPartyLeader) && ( !checkTargetForPriorityEquip() ) && player.hp>AUTO_FLEE_THRESHOLD){
             combatMessage("Pest Protection: " + loc.target + " - AUTO-FLEE");
             setTimeout(function(){window.combatEscape();}, 2000);
         }
@@ -346,6 +370,17 @@ function updateLootLog(item){
     localStorage.setItem("LootLogs", JSON.stringify(existingLogs));
 }
 
+function updateLog(message){
+    var date = new Date().toLocaleString();
+    var existingLogs = JSON.parse(localStorage.getItem("LootLogs"));
+    if( existingLogs === null){
+        existingLogs = "";
+    }
+    var log = "<p>(" + date + ") - " + message + "</p>";
+    existingLogs+=(log);
+    localStorage.setItem("LootLogs", JSON.stringify(existingLogs));
+}
+
 
 
 //get location data
@@ -454,11 +489,15 @@ function getThisPartyStarted() {
 
 function autoConfirmPopups(){
     if(AUTO_CONFIRM_POPUPS){
-        $('#popups').find(".popup_confirm_yes, .popup_message_okay").click();//auto-click confirm yes button
+        $('#popups').find(".popup_confirm_yes").click();//auto-click confirm yes button
+        if( $('#popups').find(".popup_message_okay").length > 0 && $('#popups').find("#popup_text_1:contains('You cannot carry any more stuff!')").length === 0){
+            $('#popups').find(".popup_message_okay").click();
+        }
     }
 }
 
 function getLocalStuff() {
+    if(SHOW_LOCAL_ITEMS){
     var localItemsList,localItemsURL="/ajax_moveitems.jsp?preset=location";
     if($("#local-item-summary-container").length===0) $("#buttonbar-main").first().append("<div id='local-item-summary-container'><div id='local-item-summary-container'><h4 style='margin-top:20px;'>Items in area:&nbsp;<div id='reload-local-items-container'><a id='reload-inline-items'><img src='javascript/images/wait.gif'></a></div></h4><div class='blue-box-full-top'></div><div id='local-item-summary' class='div-table'><div><br/><br/><center><img src='javascript/images/wait.gif'></center><br/><br/></div></div><div class='blue-box-full-bottom'></div></div></div>"); //add summary box if not exists
     $("#reload-inline-items").html("<img src='javascript/images/wait.gif'>");
@@ -563,6 +602,7 @@ function getLocalStuff() {
                 $("#reload-inline-items").html("↻");
             }
            });
+    }
 }
 
 function ajaxItemStats(itemName,itemId) {
