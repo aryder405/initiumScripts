@@ -24,8 +24,8 @@ var    SHOW_LOCAL_ITEMS = false;
 var   AUTO_LEAVE_FORGET = false; //automatically clicks 'Leave and Forget' after a battle
 var           AUTO_FLEE = 0;    //percent of health to flee automatically. 0 turns it off
 var AUTO_FLEE_THRESHOLD = 31;
-var         STOP_ATTACK = 70;
-var AUTO_CONFIRM_POPUPS = false; //confirms popups like camp name so you can keep your fingers to the metal!
+var         STOP_ATTACK = 75;
+var AUTO_CONFIRM_POPUPS = true; //confirms popups like camp name so you can keep your fingers to the metal!
 var        HIDE_VERSION = true; //this will hide pro icon with the version number (you jerk)
 var 		      PESTS = ["Troll", "Orc Footman", "Shell Troll", "Bear", "Wild Dog", "Gnoll Scout", "Trifelinikis",
                            "Rattlesnake", "Hobgoblin Soldier", "Bulette", "Panther", "Desert Bandit","Whispering Sandspiral",
@@ -58,7 +58,7 @@ var       EXPLORE_AREAS = [];//E on these site names, W on everything else
 var     ATTACK_INTERVAL = 2000;
 var    AUTO_EXPLORE_INTERVAL = 60000;//in ms
 var    FLEE_AND_RECORD_PATHS = false;
-var          EXPLORE_TARGETS = ["Lizard King", "Protector of the Mountains"];
+var          EXPLORE_TARGETS = [];
 /***************************/
 
 var $=window.jQuery,loc={},player={};
