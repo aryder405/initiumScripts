@@ -21,42 +21,50 @@ var           AUTO_GOLD = true;  //auto get gold after battles and when entering
 var           AUTO_REST = true;  //auto rest if injured and in restable area
 var          AUTO_SWING = true; //repeats attack after your initial attack
 var    SHOW_LOCAL_ITEMS = false;
-var   AUTO_LEAVE_FORGET = false; //automatically clicks 'Leave and Forget' after a battle
+var   AUTO_LEAVE_FORGET = true; //automatically clicks 'Leave and Forget' after a battle
 var           AUTO_FLEE = 0;    //percent of health to flee automatically. 0 turns it off
 var AUTO_FLEE_THRESHOLD = 31;
-var         STOP_ATTACK = 75;
+var         STOP_ATTACK = 50;
 var AUTO_CONFIRM_POPUPS = true; //confirms popups like camp name so you can keep your fingers to the metal!
 var        HIDE_VERSION = true; //this will hide pro icon with the version number (you jerk)
 var 		      PESTS = ["Troll", "Orc Footman", "Shell Troll", "Bear", "Wild Dog", "Gnoll Scout", "Trifelinikis",
                            "Rattlesnake", "Hobgoblin Soldier", "Bulette", "Panther", "Desert Bandit","Whispering Sandspiral",
-							"Wild Dog", "Acolyte", "Bloodsucker Worker", "Bloodsucker Drone", "Lizardfolk Soldier",
-                            "Lizardfolk Hunter", "Kobold", "Kobold Archer", "Kappa", "Crocodile", "Giant Frog", "Lunar Fanatic",
-                            "Lunar Guard", "Werewolf"];
+                           "Wild Dog", "Acolyte", "Bloodsucker Worker", "Bloodsucker Drone", "Lizardfolk Soldier",
+                           "Lizardfolk Hunter", "Kobold", "Kobold Archer", "Kappa", "Crocodile", "Giant Frog", "Lunar Fanatic",
+                           "Lunar Guard", "Werewolf", "Lunar Magistrate"];
 var     PRIORITY_EQUIPS = [
-							//Grace
-                            { name: "Lizardfolk Soldier",
-                              slot: "helmet" },
-                            { name: "Lizardfolk Hunter",
-                              slot: "helmet" },
-							//Kobolds - SE and Battleaxes
-						    { name: "Kobold",
-                              slot: "leftHand" },
-						    { name: "Kobold Archer",
-                              slot: "gloves-right" },
-						    { name: "Kobold Archer",
-                              slot: "gloves-left" },
-                          ];
+    //Grace
+    { name: "Lizardfolk Soldier", slot: "helmet" },
+    { name: "Lizardfolk Hunter", slot: "helmet" },
+    //Kobolds - SE and Battleaxes
+    { name: "Kobold", image: "Pixel_Art-Weapons-Axes-Simple-W_Axe007" },
+    { name: "Kobold Archer", slot: "gloves-right" },
+    { name: "Kobold Archer", slot: "gloves-left" },
+    //Final Favor
+    { name: "Lunar Magistrate", image: "Pixel_Art-Shields-Tower-Tower3" },
+];
+
 var    PRIORITY_TARGETS = ["Skeletal Scout", "Hobgoblin Hunter", "Hobgoblin Berserker", "Skeletal Duelist",
-                           "Thief", "Brigand", "Lunar Magistrate"];
+                           "Thief", "Brigand"];
 var      PRIORITY_ITEMS = ["Arena Ticket", "Chipped Sapphire", "Chipped Ruby", "Spiked Collar", "Chipped Diamond",
                            "Chipped Emerald", "Orc Shaman Staff", "Large Chest", "Small Chest"];
+var         EPIC_IMAGES = ["Pixel_Art-Shields-Tower-Tower3",//Final Favor
+                           "Pixel_Art-Weapons-Epic_Bow",//Malediction
+                           "Pixel_Art-Weapon-KiirtoSLoTH",//Bloodlust
+                           "Pixel_Art-Armor-Helms-Metal12",//Grace
+                           //Thorn
+                           //Gugnir
+                           //Fate's Call
+                           //Really Greatclub
+                           //Hailstorm
+                          ];
 var        IGNORE_ITEMS = ["Hardened Leather Gloves", "Leather Armor and Cloak", "Banded Mail Boots", "Linen Pants", "Linen Shirt",
                            "Leather Boots", "Leather Pants", "Leather Gloves", "Leather Cap", "Leather Armor", "Studded Leather",
                            "Open Faced Helm","Wooden Shield", "Light Steel Shield", "Light Wooden Shield", "Padded Leather Gloves",
-                           "Cloth Robe"];
+                           "Cloth Robe", "Steel Greaves", "Steel Gauntlets", "Chain Shirt"];
 var       EXPLORE_AREAS = [];//E on these site names, W on everything else
 var     ATTACK_INTERVAL = 2000;
-var    AUTO_EXPLORE_INTERVAL = 60000;//in ms
+var    AUTO_EXPLORE_INTERVAL = 45000;//in ms
 var    FLEE_AND_RECORD_PATHS = false;
 var          EXPLORE_TARGETS = [];
 /***************************/
@@ -105,11 +113,11 @@ function openLootLogBlob(){
 }
 function addButtons(){
     var allButtons = $('<div/>', { style: 'margin:5px;' } );
-	var lootButtonDiv = getLootLogButton();
-	var exploreButtonDiv = getExploreButton();
+    var lootButtonDiv = getLootLogButton();
+    var exploreButtonDiv = getExploreButton();
     var input = $('<input/>', {id:"goToButton"});
     var button = $('<button/>', {click: function(){ window.doGoto(event, $( '#goToButton').val() )} }).text("Go");
-    
+
     allButtons.append(lootButtonDiv).append(exploreButtonDiv).append(input).append(button);
     $(".chat_box").before(allButtons);
 }
@@ -148,7 +156,7 @@ function getExploreButton(){
         style: "margin:5px; color: " + (autoExplore === true ? "green" : "red"),
         click: function () { localStorage.setItem("autoExplore", JSON.stringify(!autoExplore)); location.reload(); }
     });
-	autoExploreDiv.append(b);
+    autoExploreDiv.append(b);
     return autoExploreDiv;
 }
 
@@ -158,19 +166,19 @@ function autoExplore(){
         if(loc.enemiesNearby){
             if( loc.campable ){
                 setTimeout(function(){
-					showMessage("----CREATING CAMPSITE----", "yellow");
+                    showMessage("----CREATING CAMPSITE----", "yellow");
                     window.createCampsite();
                 }, 5000);
             }
             else{
                 if( EXPLORE_AREAS.indexOf( loc.name ) > -1 ){
                     setTimeout(function(){
-						showMessage("----EXPLORING----", "yellow");
+                        showMessage("----EXPLORING----", "yellow");
                         window.doExplore(false);
                     }, 5000);
                 }else{
                     setTimeout(function(){
-						showMessage("----EXPLORING (IGNORING COMBAT SITES)----", "yellow");
+                        showMessage("----EXPLORING (IGNORING COMBAT SITES)----", "yellow");
                         window.doExplore(true);
                     }, 5000);
                 }
@@ -181,7 +189,7 @@ function autoExplore(){
     }
     if( autoExplore === true && player.health > STOP_ATTACK && loc.type === "camp" && loc.enemiesNearby ){
         setTimeout(function(){
-			showMessage("----DEFENDING----", "yellow");
+            showMessage("----DEFENDING----", "yellow");
             window.campsiteDefend();
         }, 5000);
     }
@@ -189,19 +197,20 @@ function autoExplore(){
 
 function keepPunching() {
     //for a more CircleMUD feel
-    if( loc.type==="in combat!" && FLEE_AND_RECORD_PATHS && loc.isPartyLeader && player.hp>AUTO_FLEE_THRESHOLD ){
-        if( EXPLORE_TARGETS.indexOf(loc.target) > -1 ){
-            //updateLog( loc.target + " : " + loc.currentPathID );
-        }
-        combatMessage("---AUTO FLEE AND RECORD PATHS ENABLED---");
-        setTimeout(function(){window.combatEscape();}, 2000);
-        return;
-    }
+    // if( loc.type==="in combat!" && FLEE_AND_RECORD_PATHS && loc.isPartyLeader && player.hp>AUTO_FLEE_THRESHOLD ){
+    //     if( EXPLORE_TARGETS.indexOf(loc.target) > -1 ){
+    //         //updateLog( loc.target + " : " + loc.currentPathID );
+    //     }
+    //     combatMessage("---AUTO FLEE AND RECORD PATHS ENABLED---");
+    //     setTimeout(function(){window.combatEscape();}, 2000);
+    //     return;
+    // }
     if(AUTO_SWING) {
         //flee from crap
         if( (loc.type==="in combat!" && PESTS.indexOf(loc.target) > -1 && loc.isPartyLeader) && ( !checkTargetForPriorityEquip() ) && player.hp>AUTO_FLEE_THRESHOLD){
             combatMessage("Pest Protection: " + loc.target + " - AUTO-FLEE");
             setTimeout(function(){window.combatEscape();}, 2000);
+            return;
         }
         if( (loc.type==="in a fight!" || loc.type==="in combat!"  )&& window.urlParams.type==="attack" && player.health>STOP_ATTACK) {
             if(window.urlParams.hand==="RightHand")
@@ -212,11 +221,11 @@ function keepPunching() {
             return;
         }
         if( ( loc.type==="in a fight!" || loc.type==="in combat!"  ) &&
-            ( PRIORITY_TARGETS.indexOf(loc.target) > -1 || checkTargetForPriorityEquip() ) &&
-            player.health > STOP_ATTACK ){
-                setTimeout(function(){window.combatAttackWithLeftHand();}, ATTACK_INTERVAL);
-                combatMessage("PRIORITY TARGET: " + loc.target);
-                return;
+           ( PRIORITY_TARGETS.indexOf(loc.target) > -1 || checkTargetForPriorityEquip() === true ) &&
+           player.health > STOP_ATTACK ){
+            setTimeout(function(){window.combatAttackWithLeftHand();}, ATTACK_INTERVAL);
+            combatMessage("PRIORITY TARGET: " + loc.target);
+            return;
         }
     }
     if(AUTO_FLEE>0) {
@@ -237,8 +246,25 @@ function autoLeave(){
 }
 
 function checkTargetForPriorityEquip(){
-    return PRIORITY_EQUIPS.some( x => x.name === loc.target &&
-                                          loc.targetEquipment.some( eq => eq.slot === x.slot) );
+    if( PRIORITY_EQUIPS.some( x => x.name === loc.target &&
+                             ( loc.targetEquipment.some( eq => eq.slot === x.slot) || loc.targetEquipment.some( eq => eq.image === x.image ) )
+                            ) )
+        return true;
+
+    //Go through each equipment image of target and see if it matches an epic image
+    var equipmentImages = loc.targetEquipment.map( function(item){ return item.image} );
+    var match = false;
+    if( equipmentImages.length > 0 ){
+        equipmentImages.forEach( function(eq_image){
+            EPIC_IMAGES.forEach( function(epic_image){
+                if( eq_image.indexOf(epic_image) > -1){
+                    combatMessage("EPIC DETECTED");
+                    updateLog("EPIC DETECTED: " + eq_image + " - " + epic_image);
+                    match = true;
+                }})
+        })
+    }
+    return match;
 }
 
 //get hotkeys from buttons and put 'em on the map overlay
@@ -355,9 +381,10 @@ function getRareLoot() {
                     }
                 });
             });
-        }
-    });
+        } });
 }
+
+
 
 function updateLootLog(item){
     item.Date = new Date().toLocaleString();
@@ -498,110 +525,110 @@ function autoConfirmPopups(){
 
 function getLocalStuff() {
     if(SHOW_LOCAL_ITEMS){
-    var localItemsList,localItemsURL="/ajax_moveitems.jsp?preset=location";
-    if($("#local-item-summary-container").length===0) $("#buttonbar-main").first().append("<div id='local-item-summary-container'><div id='local-item-summary-container'><h4 style='margin-top:20px;'>Items in area:&nbsp;<div id='reload-local-items-container'><a id='reload-inline-items'><img src='javascript/images/wait.gif'></a></div></h4><div class='blue-box-full-top'></div><div id='local-item-summary' class='div-table'><div><br/><br/><center><img src='javascript/images/wait.gif'></center><br/><br/></div></div><div class='blue-box-full-bottom'></div></div></div>"); //add summary box if not exists
-    $("#reload-inline-items").html("<img src='javascript/images/wait.gif'>");
-    window.localItems={};//clear the obj
-    $.ajax({ url: localItemsURL, type: "GET",
-            success: function(data) {
-                var itemLines="",itemSubLines="",localItemSummary="",
-                    locationName=$(data).find(".header-cell:nth-child(2) h5").text(),
-                    localItemsList=$(data).find("#right a.clue"),
-                    pickupLinks=$(data).find("#right a.move-right"),
-                    items=localItemsList.map(function(index) {
-                        var itemClass=$(localItemsList[index]).attr("class"),
-                            rarity=itemClass.replace("clue","").replace("item-","").replace(" ",""),
-                            viewLink=$(localItemsList[index]).attr("rel"),
-                            item={id:viewLink.split("=")[1],
-                                  name:$(localItemsList[index]).text(),
-                                  image:$(localItemsList[index]).find("img").attr("src"),
-                                  viewLink:viewLink,
-                                  pickupLink:$(pickupLinks[index]).attr("onclick"),
-                                  element:$(pickupLinks[index]),
-                                  updateLocalCount:function(count) { $(".cell[item-name='"+this.name.encode()+"']:eq(0)").parent().find(".cell:eq(1) span").text(count);},
-                                  class:itemClass,
-                                  rarity:(rarity==="")?rarity="common":rarity=rarity,
-                                  stats:{},
-                                  statLine:"",
-                                  delete:function() { return delete window.localItems[this.name][this.id]; },
-                                  pickup:function(elem,remElem,countElem,last) {
-                                      $(elem).html("<img src='/javascript/images/wait.gif'>");
-                                      $.ajaxQueue({
-                                          item:this.id,
-                                          name:this.name,
-                                          elem:elem, //element to update
-                                          remElem:remElem, //element to remove on complete
-                                          countElem:countElem, //to update the visible item count
-                                          url: "/ServletCharacterControl?type=moveItem&itemId="+this.id+"&destinationKey=Character_"+window.characterId+"&v="+window.verifyCode+"&ajax=true&v="+window.verifyCode+"&_="+window.clientTime,
-                                      }).done(function(data) {
-                                          var resultMessage=$(data)[2]||null;
-                                          if(resultMessage) {
-                                              showMessage(resultMessage.innerText.split("', '")[1].replace("');",""),"orange");
-                                          } else {
-                                              var remaining = Object.keys(window.localItems[this.name]).length-1;
-                                              window.localItems[this.name][this.item].updateLocalCount(remaining);
-                                              window.localItems[this.name][this.item].delete();
-                                              if(this.remElem && last) {
-                                                  removeElement($(this.remElem));
-                                                  getLocalStuff();
+        var localItemsList,localItemsURL="/ajax_moveitems.jsp?preset=location";
+        if($("#local-item-summary-container").length===0) $("#buttonbar-main").first().append("<div id='local-item-summary-container'><div id='local-item-summary-container'><h4 style='margin-top:20px;'>Items in area:&nbsp;<div id='reload-local-items-container'><a id='reload-inline-items'><img src='javascript/images/wait.gif'></a></div></h4><div class='blue-box-full-top'></div><div id='local-item-summary' class='div-table'><div><br/><br/><center><img src='javascript/images/wait.gif'></center><br/><br/></div></div><div class='blue-box-full-bottom'></div></div></div>"); //add summary box if not exists
+        $("#reload-inline-items").html("<img src='javascript/images/wait.gif'>");
+        window.localItems={};//clear the obj
+        $.ajax({ url: localItemsURL, type: "GET",
+                success: function(data) {
+                    var itemLines="",itemSubLines="",localItemSummary="",
+                        locationName=$(data).find(".header-cell:nth-child(2) h5").text(),
+                        localItemsList=$(data).find("#right a.clue"),
+                        pickupLinks=$(data).find("#right a.move-right"),
+                        items=localItemsList.map(function(index) {
+                            var itemClass=$(localItemsList[index]).attr("class"),
+                                rarity=itemClass.replace("clue","").replace("item-","").replace(" ",""),
+                                viewLink=$(localItemsList[index]).attr("rel"),
+                                item={id:viewLink.split("=")[1],
+                                      name:$(localItemsList[index]).text(),
+                                      image:$(localItemsList[index]).find("img").attr("src"),
+                                      viewLink:viewLink,
+                                      pickupLink:$(pickupLinks[index]).attr("onclick"),
+                                      element:$(pickupLinks[index]),
+                                      updateLocalCount:function(count) { $(".cell[item-name='"+this.name.encode()+"']:eq(0)").parent().find(".cell:eq(1) span").text(count);},
+                                      class:itemClass,
+                                      rarity:(rarity==="")?rarity="common":rarity=rarity,
+                                      stats:{},
+                                      statLine:"",
+                                      delete:function() { return delete window.localItems[this.name][this.id]; },
+                                      pickup:function(elem,remElem,countElem,last) {
+                                          $(elem).html("<img src='/javascript/images/wait.gif'>");
+                                          $.ajaxQueue({
+                                              item:this.id,
+                                              name:this.name,
+                                              elem:elem, //element to update
+                                              remElem:remElem, //element to remove on complete
+                                              countElem:countElem, //to update the visible item count
+                                              url: "/ServletCharacterControl?type=moveItem&itemId="+this.id+"&destinationKey=Character_"+window.characterId+"&v="+window.verifyCode+"&ajax=true&v="+window.verifyCode+"&_="+window.clientTime,
+                                          }).done(function(data) {
+                                              var resultMessage=$(data)[2]||null;
+                                              if(resultMessage) {
+                                                  showMessage(resultMessage.innerText.split("', '")[1].replace("');",""),"orange");
+                                              } else {
+                                                  var remaining = Object.keys(window.localItems[this.name]).length-1;
+                                                  window.localItems[this.name][this.item].updateLocalCount(remaining);
+                                                  window.localItems[this.name][this.item].delete();
+                                                  if(this.remElem && last) {
+                                                      removeElement($(this.remElem));
+                                                      getLocalStuff();
+                                                  }
                                               }
-                                          }
-                                      });
-                                  }
-                                 };
-                        if(!window.localItems[item.name]) window.localItems[item.name]={}; //create item
-                        window.localItems[item.name][item.id]=item;
-                        return item;
-                    });
+                                          });
+                                      }
+                                     };
+                            if(!window.localItems[item.name]) window.localItems[item.name]={}; //create item
+                            window.localItems[item.name][item.id]=item;
+                            return item;
+                        });
 
-                //item overview list (one row per item type)
-                for(var item in window.localItems) {//summary row for display on under main-dynamic-content-box
-                    var firstItem=window.localItems[item][Object.keys(window.localItems[item])[0]]; //first item in obj
-                    localItemSummary+=
-                        "<div class='row'>"+
-                        "<div class='cell localitem-summary-image'><img src='"+firstItem.image+ "'></div>"+
-                        "<div class='cell localitem-summary-count'>(x <span>"+Object.keys(window.localItems[item]).length+"</span>) &nbsp;<img src='"+window.IMG_ARROW+"' style='width:11px;'>&nbsp;</div>"+
-                        "<div class='cell localitem-summary-name show-item-sublist'><div class='main-item-name'><a onclick=''>"+firstItem.name+"</a></div></div>"+
-                        "<div class='cell localitem-summary-view show-item-sublist' item-name='"+firstItem.name.encode()+"'><a onclick=''>(View all)</a></div>"+
-                        "<div class='cell localitem-summary-take' item-name='"+firstItem.name.encode()+"'><a onclick=''>(Take all)</a></div>"+
-                        "</div>";
-                }
-                //display items in area summary when user enters
-                $("#local-item-summary").html(localItemSummary);
-                $("#local-item-summary").css({"background-size":"100% "+((Object.keys(window.localItems).length*28)+100)+"px"});
-                $("#reload-inline-items").bind('click',function(){getLocalStuff();});
-                $('.show-item-sublist').bind('click',function(){ //bind the actions
-                    var itemName=$(this).attr('item-name').decode(),firstItem=window.localItems[itemName][Object.keys(window.localItems[itemName])[0]], //first item in obj
-                        itemSublist="<div style='font-size:20px;'><img src='"+firstItem.image+ "'> <span style='color:#DDD;'>x"+Object.keys(window.localItems[firstItem.name]).length+"</span> <span>"+firstItem.name+":</span><span style='float:right;font-size:27px;'><a class='close-item-sublist' onclick=''>X</a></span></div><hr>";
-                    $(".itemSublist").remove();//remove all other item sublists
-                    for(var item in window.localItems[firstItem.name]) { //item sublist popup
-                        var itemData,subItem=window.localItems[firstItem.name][item];
-                        itemSublist+="<div class='row'>"+
-                            "<div class='cell "+subItem.class+" localitem-popup-image'><img src='"+subItem.image+ "'>&nbsp;</div>"+
-                            "<div class='cell'><a class='"+subItem.class+" localitem-popup-name' rel='"+subItem.viewLink+"'>"+subItem.name+"</a><br/>"+
-                            "<div class='inline-stats' id='inline-stats-"+item+"'>Loading item stats...<br/><img src='/javascript/images/wait.gif'></div></div>"+
-                            "<div class='cell localitem-summary-view' style='vertical-align:middle;'>&nbsp;<a class='take-item' itemName='"+encodeURIComponent(subItem.name)+"' itemId='"+item+"'>(Take)</a></div></div>";
+                    //item overview list (one row per item type)
+                    for(var item in window.localItems) {//summary row for display on under main-dynamic-content-box
+                        var firstItem=window.localItems[item][Object.keys(window.localItems[item])[0]]; //first item in obj
+                        localItemSummary+=
+                            "<div class='row'>"+
+                            "<div class='cell localitem-summary-image'><img src='"+firstItem.image+ "'></div>"+
+                            "<div class='cell localitem-summary-count'>(x <span>"+Object.keys(window.localItems[item]).length+"</span>) &nbsp;<img src='"+window.IMG_ARROW+"' style='width:11px;'>&nbsp;</div>"+
+                            "<div class='cell localitem-summary-name show-item-sublist'><div class='main-item-name'><a onclick=''>"+firstItem.name+"</a></div></div>"+
+                            "<div class='cell localitem-summary-view show-item-sublist' item-name='"+firstItem.name.encode()+"'><a onclick=''>(View all)</a></div>"+
+                            "<div class='cell localitem-summary-take' item-name='"+firstItem.name.encode()+"'><a onclick=''>(Take all)</a></div>"+
+                            "</div>";
                     }
-                    var itemSublistPopup='<div class="itemSublist table cluetip ui-widget ui-widget-content ui-cluetip clue-right-rounded cluetip-rounded ui-corner-all" style="position: absolute; margin-bottom:20px; width: 450px; left: '+($(this).position().left)+'px; z-index: 2000000; top: '+($(this).position().top+5)+'px; box-shadow: rgba(0, 0, 0, 0.498039) 1px 1px 6px;"><div class="cluetip-outer" style="position: relative; z-index: 2000000; overflow: visible; height: auto;"><div class="cluetip-inner ui-widget-content ui-cluetip-content">'+itemSublist+'</div></div><div class="cluetip-extra"></div><div class="cluetip-arrows ui-state-default" style="z-index: 2000001; top: -4px; display: block;"></div></div>';
-                    $("body").append(itemSublistPopup);
-                    $('.close-item-sublist').bind('click',function(){ $(".itemSublist").remove(); }); //close item sublist button closes all item sublists
-                    $('.take-item').bind('click',function(){
-                        window.localItems[$(this).attr("itemName").decode()][$(this).attr("itemId")].pickup(this,$(this).parent().parent(),null,true);
+                    //display items in area summary when user enters
+                    $("#local-item-summary").html(localItemSummary);
+                    $("#local-item-summary").css({"background-size":"100% "+((Object.keys(window.localItems).length*28)+100)+"px"});
+                    $("#reload-inline-items").bind('click',function(){getLocalStuff();});
+                    $('.show-item-sublist').bind('click',function(){ //bind the actions
+                        var itemName=$(this).attr('item-name').decode(),firstItem=window.localItems[itemName][Object.keys(window.localItems[itemName])[0]], //first item in obj
+                            itemSublist="<div style='font-size:20px;'><img src='"+firstItem.image+ "'> <span style='color:#DDD;'>x"+Object.keys(window.localItems[firstItem.name]).length+"</span> <span>"+firstItem.name+":</span><span style='float:right;font-size:27px;'><a class='close-item-sublist' onclick=''>X</a></span></div><hr>";
+                        $(".itemSublist").remove();//remove all other item sublists
+                        for(var item in window.localItems[firstItem.name]) { //item sublist popup
+                            var itemData,subItem=window.localItems[firstItem.name][item];
+                            itemSublist+="<div class='row'>"+
+                                "<div class='cell "+subItem.class+" localitem-popup-image'><img src='"+subItem.image+ "'>&nbsp;</div>"+
+                                "<div class='cell'><a class='"+subItem.class+" localitem-popup-name' rel='"+subItem.viewLink+"'>"+subItem.name+"</a><br/>"+
+                                "<div class='inline-stats' id='inline-stats-"+item+"'>Loading item stats...<br/><img src='/javascript/images/wait.gif'></div></div>"+
+                                "<div class='cell localitem-summary-view' style='vertical-align:middle;'>&nbsp;<a class='take-item' itemName='"+encodeURIComponent(subItem.name)+"' itemId='"+item+"'>(Take)</a></div></div>";
+                        }
+                        var itemSublistPopup='<div class="itemSublist table cluetip ui-widget ui-widget-content ui-cluetip clue-right-rounded cluetip-rounded ui-corner-all" style="position: absolute; margin-bottom:20px; width: 450px; left: '+($(this).position().left)+'px; z-index: 2000000; top: '+($(this).position().top+5)+'px; box-shadow: rgba(0, 0, 0, 0.498039) 1px 1px 6px;"><div class="cluetip-outer" style="position: relative; z-index: 2000000; overflow: visible; height: auto;"><div class="cluetip-inner ui-widget-content ui-cluetip-content">'+itemSublist+'</div></div><div class="cluetip-extra"></div><div class="cluetip-arrows ui-state-default" style="z-index: 2000001; top: -4px; display: block;"></div></div>';
+                        $("body").append(itemSublistPopup);
+                        $('.close-item-sublist').bind('click',function(){ $(".itemSublist").remove(); }); //close item sublist button closes all item sublists
+                        $('.take-item').bind('click',function(){
+                            window.localItems[$(this).attr("itemName").decode()][$(this).attr("itemId")].pickup(this,$(this).parent().parent(),null,true);
+                        });
+                        for(var itemId in window.localItems[firstItem.name]) ajaxItemStats(firstItem.name,itemId); //load stats in popup
                     });
-                    for(var itemId in window.localItems[firstItem.name]) ajaxItemStats(firstItem.name,itemId); //load stats in popup
-                });
-                $('.localitem-summary-take').bind('click',function(){ //take all
-                    var z=Object.keys(window.localItems[$(this).attr('item-name').decode()]).length;
-                    var itemName=$(this).attr('item-name').decode();
-                    var itemCountDisplay=$(".cell[item-name='"+itemName.encode()+"']:eq(0)").parent().find(".cell:eq(1) span");
-                    while(z--)  {
-                        var itemId=Object.keys(window.localItems[$(this).attr('item-name').decode()])[z];
-                        window.localItems[itemName][itemId].pickup(this,this,itemCountDisplay,(z===0)?true:false);
-                    }
-                });
-                $("#reload-inline-items").html("↻");
-            }
-           });
+                    $('.localitem-summary-take').bind('click',function(){ //take all
+                        var z=Object.keys(window.localItems[$(this).attr('item-name').decode()]).length;
+                        var itemName=$(this).attr('item-name').decode();
+                        var itemCountDisplay=$(".cell[item-name='"+itemName.encode()+"']:eq(0)").parent().find(".cell:eq(1) span");
+                        while(z--)  {
+                            var itemId=Object.keys(window.localItems[$(this).attr('item-name').decode()])[z];
+                            window.localItems[itemName][itemId].pickup(this,this,itemCountDisplay,(z===0)?true:false);
+                        }
+                    });
+                    $("#reload-inline-items").html("↻");
+                }
+               });
     }
 }
 
