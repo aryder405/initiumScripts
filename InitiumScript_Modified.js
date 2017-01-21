@@ -24,14 +24,14 @@ var    SHOW_LOCAL_ITEMS = false;
 var   AUTO_LEAVE_FORGET = true; //automatically clicks 'Leave and Forget' after a battle
 var           AUTO_FLEE = 0;    //percent of health to flee automatically. 0 turns it off
 var AUTO_FLEE_THRESHOLD = 31;
-var         STOP_ATTACK = 50;
+var         STOP_ATTACK = 80;
 var AUTO_CONFIRM_POPUPS = true; //confirms popups like camp name so you can keep your fingers to the metal!
 var        HIDE_VERSION = true; //this will hide pro icon with the version number (you jerk)
 var 		      PESTS = ["Troll", "Orc Footman", "Shell Troll", "Bear", "Wild Dog", "Gnoll Scout", "Trifelinikis",
                            "Rattlesnake", "Hobgoblin Soldier", "Bulette", "Panther", "Desert Bandit","Whispering Sandspiral",
                            "Wild Dog", "Acolyte", "Bloodsucker Worker", "Bloodsucker Drone", "Lizardfolk Soldier",
                            "Lizardfolk Hunter", "Kobold", "Kobold Archer", "Kappa", "Crocodile", "Giant Frog", "Lunar Fanatic",
-                           "Lunar Guard", "Werewolf", "Lunar Magistrate"];
+                           "Lunar Guard", "Werewolf", "Lunar Magistrate" ];
 var     PRIORITY_EQUIPS = [
     //Grace
     { name: "Lizardfolk Soldier", slot: "helmet" },
@@ -207,7 +207,7 @@ function keepPunching() {
     // }
     if(AUTO_SWING) {
         //flee from crap
-        if( (loc.type==="in combat!" && PESTS.indexOf(loc.target) > -1 && loc.isPartyLeader) && ( !checkTargetForPriorityEquip() ) && player.hp>AUTO_FLEE_THRESHOLD){
+        if( (loc.type==="in combat!" && PESTS.indexOf(loc.target) > -1 && loc.isPartyLeader) && ( checkTargetForPriorityEquip() === false ) && player.hp>AUTO_FLEE_THRESHOLD){
             combatMessage("Pest Protection: " + loc.target + " - AUTO-FLEE");
             setTimeout(function(){window.combatEscape();}, 2000);
             return;
@@ -426,7 +426,7 @@ function getLocation() {
     $("#inBannerCombatantWidget").find(".avatar-equip-backing > div[class^=avatar-equip]").each( function() {
         var equip = {
             slot: $(this).attr('class').split('equip-')[1],
-            image: $(this).css('background-image').split('/').length > 4 ? $(this).css('background-image').split('/')[5].replace('.png")', '') : null,
+            image: $(this).css('background-image').split('/').length > 4 ? $(this).css('background-image').split('/')[5].replace('.png")', '') : '',
         };
         loc.targetEquipment.push(equip);
     } );
