@@ -23,15 +23,20 @@ var          AUTO_SWING = true; //repeats attack after your initial attack
 var    SHOW_LOCAL_ITEMS = false;
 var   AUTO_LEAVE_FORGET = true; //automatically clicks 'Leave and Forget' after a battle
 var           AUTO_FLEE = 0;    //percent of health to flee automatically. 0 turns it off
-var AUTO_FLEE_THRESHOLD = 31;
-var         STOP_ATTACK = 80;
+var AUTO_FLEE_THRESHOLD = 25;
+var         STOP_ATTACK = 50;
 var AUTO_CONFIRM_POPUPS = true; //confirms popups like camp name so you can keep your fingers to the metal!
 var        HIDE_VERSION = true; //this will hide pro icon with the version number (you jerk)
+var       EXPLORE_AREAS = [];//E on these site names, W on everything else
+var     ATTACK_INTERVAL = 2000;
+var    AUTO_EXPLORE_INTERVAL = 45000;//in ms
+var    FLEE_AND_RECORD_PATHS = false;
+var          EXPLORE_TARGETS = [];
 var 		      PESTS = ["Troll", "Orc Footman", "Shell Troll", "Bear", "Wild Dog", "Gnoll Scout", "Trifelinikis",
                            "Rattlesnake", "Hobgoblin Soldier", "Bulette", "Panther", "Desert Bandit","Whispering Sandspiral",
                            "Wild Dog", "Acolyte", "Bloodsucker Worker", "Bloodsucker Drone", "Lizardfolk Soldier",
                            "Lizardfolk Hunter", "Kobold", "Kobold Archer", "Kappa", "Crocodile", "Giant Frog", "Lunar Fanatic",
-                           "Lunar Guard", "Werewolf", "Lunar Magistrate" ];
+                           "Lunar Guard", "Werewolf", "Wererat", "Lunar Magistrate", "Hobgoblin Hunter" ];
 var     PRIORITY_EQUIPS = [
     //Grace
     { name: "Lizardfolk Soldier", slot: "helmet" },
@@ -42,31 +47,35 @@ var     PRIORITY_EQUIPS = [
     { name: "Kobold Archer", slot: "gloves-left" },
     //Final Favor
     { name: "Lunar Magistrate", image: "Pixel_Art-Shields-Tower-Tower3" },
+    //Malediction
+    { name: "Hobgoblin Hunter", image: "Pixel_Art-Weapons-Epic_Bow" },
+
 ];
 
-var    PRIORITY_TARGETS = ["Skeletal Scout", "Hobgoblin Hunter", "Hobgoblin Berserker", "Skeletal Duelist",
+var    PRIORITY_TARGETS = ["Skeletal Scout", "Hobgoblin Berserker", "Skeletal Duelist",
                            "Thief", "Brigand"];
 var      PRIORITY_ITEMS = ["Arena Ticket", "Chipped Sapphire", "Chipped Ruby", "Spiked Collar", "Chipped Diamond",
                            "Chipped Emerald", "Orc Shaman Staff", "Large Chest", "Small Chest"];
-var         EPIC_IMAGES = ["Pixel_Art-Shields-Tower-Tower3",//Final Favor
-                           "Pixel_Art-Weapons-Epic_Bow",//Malediction
-                           "Pixel_Art-Weapon-KiirtoSLoTH",//Bloodlust
-                           "Pixel_Art-Armor-Helms-Metal12",//Grace
-                           //Thorn
-                           //Gugnir
-                           //Fate's Call
-                           //Really Greatclub
-                           //Hailstorm
+var         EPIC_IMAGES = ["Pixel_Art-Shields-Tower-Tower3",		   //Final Favor
+                           "Pixel_Art-Weapons-Epic_Bow",		       //Malediction
+                           "Pixel_Art-Weapon-KiirtoSLoTH",			   //Bloodlust
+                           "Pixel_Art-Armor-Helms-Metal12",			   //Grace
+                           "Pixel_Art-Weapons-Daggers-Ornate-Ornate6", //Thorn
+																	   //Gugnir
+						   "Pixel_Art-Weapons-Axes-GKA", 			   //Grave kings Axe
+                           "Pixel_Art-Weapon-Fates-Call-New",		   //Fate's Call
+						   "Pixel_Art-Weapons-Hammers-W_Gold_Mace",    //Retribution
+                           "Pixel_Art-Weapons-Clubs-Clubs2"            //Really Greatclub
+                           "Pixel_Art-Weapon-Hailstorm_Epic_Battleaxe",//Hailstorm
+						   "Pixel-Art-Weapon-Epic-Dual-Swords",		   //Forgive and Forget
+						   "Pixel_Art-Armor-Red-White-Kite-Shield",    //Shield of Evalach
+						   "Pixel_Art-Weapon-Moltenblade",			   //MOltenblade
+						   "Pixel_Art-Weapons-Swords-Ornate-Ornate9",  //BLack Blade
                           ];
 var        IGNORE_ITEMS = ["Hardened Leather Gloves", "Leather Armor and Cloak", "Banded Mail Boots", "Linen Pants", "Linen Shirt",
                            "Leather Boots", "Leather Pants", "Leather Gloves", "Leather Cap", "Leather Armor", "Studded Leather",
                            "Open Faced Helm","Wooden Shield", "Light Steel Shield", "Light Wooden Shield", "Padded Leather Gloves",
                            "Cloth Robe", "Steel Greaves", "Steel Gauntlets", "Chain Shirt"];
-var       EXPLORE_AREAS = [];//E on these site names, W on everything else
-var     ATTACK_INTERVAL = 2000;
-var    AUTO_EXPLORE_INTERVAL = 45000;//in ms
-var    FLEE_AND_RECORD_PATHS = false;
-var          EXPLORE_TARGETS = [];
 /***************************/
 
 var $=window.jQuery,loc={},player={};
