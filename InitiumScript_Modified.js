@@ -23,7 +23,7 @@ var          AUTO_SWING = true; //repeats attack after your initial attack
 var    SHOW_LOCAL_ITEMS = false;
 var   AUTO_LEAVE_FORGET = true; //automatically clicks 'Leave and Forget' after a battle
 var           AUTO_FLEE = 0;    //percent of health to flee automatically. 0 turns it off
-var AUTO_FLEE_THRESHOLD = 25;
+var AUTO_FLEE_THRESHOLD = 30;
 var         STOP_ATTACK = 50;
 var AUTO_CONFIRM_POPUPS = true; //confirms popups like camp name so you can keep your fingers to the metal!
 var        HIDE_VERSION = true; //this will hide pro icon with the version number (you jerk)
@@ -36,7 +36,8 @@ var 		      PESTS = ["Troll", "Orc Footman", "Shell Troll", "Bear", "Wild Dog", 
                            "Rattlesnake", "Hobgoblin Soldier", "Bulette", "Panther", "Desert Bandit","Whispering Sandspiral",
                            "Wild Dog", "Acolyte", "Bloodsucker Worker", "Bloodsucker Drone", "Lizardfolk Soldier",
                            "Lizardfolk Hunter", "Kobold", "Kobold Archer", "Kappa", "Crocodile", "Giant Frog", "Lunar Fanatic",
-                           "Lunar Guard", "Werewolf", "Wererat", "Lunar Magistrate", "Hobgoblin Hunter" ];
+                           "Lunar Guard", "Werewolf", "Wererat", "Lunar Magistrate", "Hobgoblin Hunter", "Tiefling",
+                           "Spectre", "Insane Adventurer", "Trained Dire Wolf", "Unicorn", "Dryad Guardian"];
 var     PRIORITY_EQUIPS = [
     //Grace
     { name: "Lizardfolk Soldier", slot: "helmet" },
@@ -49,13 +50,13 @@ var     PRIORITY_EQUIPS = [
     { name: "Lunar Magistrate", image: "Pixel_Art-Shields-Tower-Tower3" },
     //Malediction
     { name: "Hobgoblin Hunter", image: "Pixel_Art-Weapons-Epic_Bow" },
-
+    { name: "Insane Adventurer", image: "Pixel_Art-Weapon-KiirtoSLoTH" },
 ];
 
 var    PRIORITY_TARGETS = ["Skeletal Scout", "Hobgoblin Berserker", "Skeletal Duelist",
                            "Thief", "Brigand"];
 var      PRIORITY_ITEMS = ["Arena Ticket", "Chipped Sapphire", "Chipped Ruby", "Spiked Collar", "Chipped Diamond",
-                           "Chipped Emerald", "Orc Shaman Staff", "Large Chest", "Small Chest"];
+                           "Chipped Emerald", "Orc Shaman Staff", "Large Chest", "Small Chest", "Unicorn Meat"];
 var         EPIC_IMAGES = ["Pixel_Art-Shields-Tower-Tower3",		   //Final Favor
                            "Pixel_Art-Weapons-Epic_Bow",		       //Malediction
                            "Pixel_Art-Weapon-KiirtoSLoTH",			   //Bloodlust
@@ -65,7 +66,7 @@ var         EPIC_IMAGES = ["Pixel_Art-Shields-Tower-Tower3",		   //Final Favor
 						   "Pixel_Art-Weapons-Axes-GKA", 			   //Grave kings Axe
                            "Pixel_Art-Weapon-Fates-Call-New",		   //Fate's Call
 						   "Pixel_Art-Weapons-Hammers-W_Gold_Mace",    //Retribution
-                           "Pixel_Art-Weapons-Clubs-Clubs2"            //Really Greatclub
+                           "Pixel_Art-Weapons-Clubs-Clubs2",           //Really Greatclub
                            "Pixel_Art-Weapon-Hailstorm_Epic_Battleaxe",//Hailstorm
 						   "Pixel-Art-Weapon-Epic-Dual-Swords",		   //Forgive and Forget
 						   "Pixel_Art-Armor-Red-White-Kite-Shield",    //Shield of Evalach
@@ -214,6 +215,9 @@ function keepPunching() {
     //     setTimeout(function(){window.combatEscape();}, 2000);
     //     return;
     // }
+    if(checkTargetForEpics() === true){
+        return;
+    }
     if(AUTO_SWING) {
         //flee from crap
         if( (loc.type==="in combat!" && PESTS.indexOf(loc.target) > -1 && loc.isPartyLeader) && ( checkTargetForPriorityEquip() === false ) && player.hp>AUTO_FLEE_THRESHOLD){
@@ -255,11 +259,12 @@ function autoLeave(){
 }
 
 function checkTargetForPriorityEquip(){
-    if( PRIORITY_EQUIPS.some( x => x.name === loc.target &&
+    return PRIORITY_EQUIPS.some( x => x.name === loc.target &&
                              ( loc.targetEquipment.some( eq => eq.slot === x.slot) || loc.targetEquipment.some( eq => eq.image === x.image ) )
-                            ) )
-        return true;
+                            );        
+}
 
+function checkTargetForEpics(){
     //Go through each equipment image of target and see if it matches an epic image
     var equipmentImages = loc.targetEquipment.map( function(item){ return item.image} );
     var match = false;
