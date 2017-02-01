@@ -23,8 +23,8 @@ var          AUTO_SWING = true; //repeats attack after your initial attack
 var    SHOW_LOCAL_ITEMS = false;
 var   AUTO_LEAVE_FORGET = true; //automatically clicks 'Leave and Forget' after a battle
 var           AUTO_FLEE = 0;    //percent of health to flee automatically. 0 turns it off
-var AUTO_FLEE_THRESHOLD = 30;
-var         STOP_ATTACK = 50;
+var AUTO_FLEE_THRESHOLD = 40;
+var         STOP_ATTACK = 40;
 var AUTO_CONFIRM_POPUPS = true; //confirms popups like camp name so you can keep your fingers to the metal!
 var        HIDE_VERSION = true; //this will hide pro icon with the version number (you jerk)
 var       EXPLORE_AREAS = [];//E on these site names, W on everything else
@@ -37,7 +37,9 @@ var 		      PESTS = ["Troll", "Orc Footman", "Shell Troll", "Bear", "Wild Dog", 
                            "Wild Dog", "Acolyte", "Bloodsucker Worker", "Bloodsucker Drone", "Lizardfolk Soldier",
                            "Lizardfolk Hunter", "Kobold", "Kobold Archer", "Kappa", "Crocodile", "Giant Frog", "Lunar Fanatic",
                            "Lunar Guard", "Werewolf", "Wererat", "Lunar Magistrate", "Hobgoblin Hunter", "Tiefling",
-                           "Spectre", "Insane Adventurer", "Trained Dire Wolf", "Unicorn", "Dryad Guardian"];
+                           "Spectre", "Insane Adventurer", "Trained Dire Wolf", "Unicorn", "Dryad Guardian", "Bronze Dragon",
+                           "Black Dragon", "Black Dragonling", "Giant Scorpion", "Nomad Scout", "Giant Tarantula", "Virulent Scorpion",
+                           "Rock Golem", "Pit Viper", "Tarantula", "Nomad Scavenger", "Sword Dancer", "Nomad Merchant", "Desert Assassin"];
 var     PRIORITY_EQUIPS = [
     //Grace
     { name: "Lizardfolk Soldier", slot: "helmet" },
@@ -51,6 +53,8 @@ var     PRIORITY_EQUIPS = [
     //Malediction
     { name: "Hobgoblin Hunter", image: "Pixel_Art-Weapons-Epic_Bow" },
     { name: "Insane Adventurer", image: "Pixel_Art-Weapon-KiirtoSLoTH" },
+    //Desert Assassin
+    { name: "Desert Assassin", image: "Pixel_Art-Weapons-Swords-Swords04" },
 ];
 
 var    PRIORITY_TARGETS = ["Skeletal Scout", "Hobgoblin Berserker", "Skeletal Duelist",
@@ -62,7 +66,7 @@ var         EPIC_IMAGES = ["Pixel_Art-Shields-Tower-Tower3",		   //Final Favor
                            "Pixel_Art-Weapon-KiirtoSLoTH",			   //Bloodlust
                            "Pixel_Art-Armor-Helms-Metal12",			   //Grace
                            "Pixel_Art-Weapons-Daggers-Ornate-Ornate6", //Thorn
-																	   //Gugnir
+						   "Pixel_Art-Weapon-Epic-Gungnir001.png",	   //Gugnir
 						   "Pixel_Art-Weapons-Axes-GKA", 			   //Grave kings Axe
                            "Pixel_Art-Weapon-Fates-Call-New",		   //Fate's Call
 						   "Pixel_Art-Weapons-Hammers-W_Gold_Mace",    //Retribution
@@ -76,7 +80,8 @@ var         EPIC_IMAGES = ["Pixel_Art-Shields-Tower-Tower3",		   //Final Favor
 var        IGNORE_ITEMS = ["Hardened Leather Gloves", "Leather Armor and Cloak", "Banded Mail Boots", "Linen Pants", "Linen Shirt",
                            "Leather Boots", "Leather Pants", "Leather Gloves", "Leather Cap", "Leather Armor", "Studded Leather",
                            "Open Faced Helm","Wooden Shield", "Light Steel Shield", "Light Wooden Shield", "Padded Leather Gloves",
-                           "Cloth Robe", "Steel Greaves", "Steel Gauntlets", "Chain Shirt"];
+                           "Cloth Robe", "Steel Greaves", "Steel Gauntlets", "Chain Shirt", "Cloaked Headwrap", "Shrouded Garments",
+                           "Assassin's Blade", "Nomad Leggings"];
 /***************************/
 
 var $=window.jQuery,loc={},player={};
@@ -225,7 +230,7 @@ function keepPunching() {
             setTimeout(function(){window.combatEscape();}, 2000);
             return;
         }
-        if( (loc.type==="in a fight!" || loc.type==="in combat!"  )&& window.urlParams.type==="attack" && player.health>STOP_ATTACK) {
+        if( (loc.type==="in a fight!" || loc.type==="in combat!"  )&& window.urlParams.type==="attack" && player.hp>STOP_ATTACK) {
             if(window.urlParams.hand==="RightHand")
                 setTimeout(function(){window.combatAttackWithRightHand();}, ATTACK_INTERVAL);
             else
@@ -235,7 +240,7 @@ function keepPunching() {
         }
         if( ( loc.type==="in a fight!" || loc.type==="in combat!"  ) &&
            ( PRIORITY_TARGETS.indexOf(loc.target) > -1 || checkTargetForPriorityEquip() === true ) &&
-           player.health > STOP_ATTACK ){
+           player.hp > STOP_ATTACK ){
             setTimeout(function(){window.combatAttackWithLeftHand();}, ATTACK_INTERVAL);
             combatMessage("PRIORITY TARGET: " + loc.target);
             return;
@@ -272,7 +277,14 @@ function checkTargetForEpics(){
         equipmentImages.forEach( function(eq_image){
             EPIC_IMAGES.forEach( function(epic_image){
                 if( eq_image.indexOf(epic_image) > -1){
-                    combatMessage("EPIC DETECTED");
+                    combatMessage("","--EPIC DETECTED--EPIC DETECTED--EPIC DETECTED--EPIC DETECTED--", "Fuchsia");
+                    combatMessage("","--EPIC DETECTED--EPIC DETECTED--EPIC DETECTED--EPIC DETECTED--", "Chartreuse");
+                    combatMessage("","--EPIC DETECTED--EPIC DETECTED--EPIC DETECTED--EPIC DETECTED--", "SpringGreen");
+                    combatMessage("","--EPIC DETECTED--EPIC DETECTED--EPIC DETECTED--EPIC DETECTED--", "DarkOrchid");
+                    combatMessage("","--EPIC DETECTED--EPIC DETECTED--EPIC DETECTED--EPIC DETECTED--", "Fuchsia");
+                    combatMessage("","--EPIC DETECTED--EPIC DETECTED--EPIC DETECTED--EPIC DETECTED--", "Chartreuse");
+                    combatMessage("","--EPIC DETECTED--EPIC DETECTED--EPIC DETECTED--EPIC DETECTED--", "SpringGreen");
+                    combatMessage("","--EPIC DETECTED--EPIC DETECTED--EPIC DETECTED--EPIC DETECTED--", "DarkOrchid");
                     updateLog("EPIC DETECTED: " + eq_image + " - " + epic_image);
                     match = true;
                 }})
@@ -351,7 +363,7 @@ function getRareLoot() {
         url: localCharsURL,
     }).done(function(data) {
         if( loc.isCombatLocation ) {
-            $(".main-item-container").find("a[rel^=viewitem]").each( function(index){
+            $(".main-item-container").find("a[rel*=viewitem]").each( function(index){
                 lootItem = {
                     itemAnchor : $(this).closest(".main-item-container").find("a[onclick*=collectItem]").eq(0),
                     itemID : $(this).attr("rel").split('=')[1],
@@ -695,7 +707,7 @@ function mutationHandler (mutationRecords) {
             var removed = $(mutation.removedNodes);
             var added = $(mutation.addedNodes);
             if(AUTO_CONFIRM_POPUPS){
-                $(added).find(".popup_confirm_yes, .popup_message_okay").click();//auto-click confirm yes button
+                $(added).find(".popup_confirm_yes, .popup_message_okay, .popup_confirm_option:contains('Okay')").click();//auto-click confirm yes button
             }
             //instance countdown
             var countDown=removed.text().split("arrive")[1];
@@ -882,6 +894,6 @@ String.prototype.decode=function() { return decodeURIComponent(this).replace("%2
 String.prototype.encode=function() { return encodeURIComponent(this).replace(/'/g, "%27"); };
 function removeElement(el) {$(el).fadeOut(300, function() { $(this).remove(); });}
 function showMessage(msg,color) { $(".show-message").remove();$(".main-dynamic-content-box").first().append("<div class='show-message' style=\"color:"+(color||"white")+";padding-top:15px;\">"+msg+"</div>");}
-function combatMessage(msg,type) { return $(".main-page:eq(1) > p:eq(0)").append("<div style='margin:10px 0px;'><span style='color:orange;'>["+(type||"INFO")+"]</span>&nbsp;"+msg+"</div>"); }
+function combatMessage(msg,type, color) { return $(".main-page:eq(1) > p:eq(0)").append("<div style='margin:10px 0px;'><span style='color:"+(color || "orange")+";'>["+(type||"INFO")+"]</span>&nbsp;"+msg+"</div>"); }
 function pulse(elName,color) { $(elName).css({"background-color":color}).fadeTo(400, 0.5, function() { $(elName).fadeTo(300, 1).css({"background-color":""}); }); }
 function getUrlParams() { var params={};window.location.search.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(str,key,value) { params[key] = value; });return params;}
